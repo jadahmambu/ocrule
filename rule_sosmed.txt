@@ -1,3 +1,33 @@
+# =========================================================================
+# DATABASE UTAMA (MENYEDOT DATA GLOBAL)
+# =========================================================================
 include:facebook
 include:instagram
 include:whatsapp
+
+# =========================================================================
+# KATEGORI 1: WHATSAPP KUSTOM (CHAT, CALL, & MEDIA CDN)
+# =========================================================================
+domain:whatsapp.com
+domain:whatsapp.net
+keyword:whatsapp
+
+# =========================================================================
+# KATEGORI 2: FACEBOOK KUSTOM (BERANDA, MESSENGER, & GRUP)
+# =========================================================================
+domain:facebook.com
+domain:facebook.net
+keyword:facebook
+
+# =========================================================================
+# KATEGORI 3: INSTAGRAM KUSTOM (REELS, STORIES, & DM)
+# =========================================================================
+domain:instagram.com
+keyword:instagram
+
+# =========================================================================
+# KATEGORI 4: SERVER AKSELERASI & CDN BERSAMA (META GROUP)
+# =========================================================================
+domain:fbcdn.net
+domain:cdninstagram.com
+domain:fbsbx.com
