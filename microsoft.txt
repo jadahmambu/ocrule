@@ -1,5 +1,3 @@
-keyword:microsoftonline
-keyword:microsoft
 domain:live.com
 domain:office.com
 domain:office365.com
@@ -10,3 +8,5 @@ domain:msedge.net
 domain:azure.com
 domain:windows.net
 domain:aadrm.com
+keyword:microsoftonline
+keyword:microsoft
