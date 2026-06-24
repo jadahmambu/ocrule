@@ -1,14 +1,12 @@
-# Daftar Bypass Microsoft Office 365 & SharePoint
-
-  - DOMAIN-KEYWORD,microsoftonline
-  - DOMAIN-KEYWORD,microsoft
-  - DOMAIN-SUFFIX,live.com
-  - DOMAIN-SUFFIX,office.com
-  - DOMAIN-SUFFIX,office365.com
-  - DOMAIN-SUFFIX,sharepoint.com
-  - DOMAIN-SUFFIX,msauth.net
-  - DOMAIN-SUFFIX,msftauth.net
-  - DOMAIN-SUFFIX,msedge.net
-  - DOMAIN-SUFFIX,azure.com
-  - DOMAIN-SUFFIX,windows.net
-  - DOMAIN-SUFFIX,aadrm.com
+keyword:microsoftonline
+keyword:microsoft
+domain:live.com
+domain:office.com
+domain:office365.com
+domain:sharepoint.com
+domain:msauth.net
+domain:msftauth.net
+domain:msedge.net
+domain:azure.com
+domain:windows.net
+domain:aadrm.com
