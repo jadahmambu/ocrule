@@ -1,5 +1,4 @@
-keyword:microsoftonline
-keyword:microsoft
+# Menggunakan domain: untuk mencocokkan domain dan sub-domainnya
 domain:live.com
 domain:office.com
 domain:office365.com
@@ -10,3 +9,7 @@ domain:msedge.net
 domain:azure.com
 domain:windows.net
 domain:aadrm.com
+
+# Menggunakan regex: untuk menggantikan fungsi 'keyword:' agar mencakup semua yang mengandung kata tersebut
+regex:microsoftonline
+regex:microsoft
