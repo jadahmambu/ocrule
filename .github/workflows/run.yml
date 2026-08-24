@@ -36,9 +36,6 @@ jobs:
           echo "ANTISCAM=https://raw.githubusercontent.com/malikshi/antiscam/refs/heads/main/antiscam.txt" >> $GITHUB_ENV
           echo "RULE_ADS_EXTENDED=https://raw.githubusercontent.com/malikshi/v2ray-rules-dat/rule/rule_ads.txt" >> $GITHUB_ENV
           echo "RULE_BANK_ID=https://raw.githubusercontent.com/malikshi/v2ray-rules-dat/rule/rule_bank-id.txt" >> $GITHUB_ENV
-          # Menggunakan OISD Small agar jauh lebih ringan namun tetap ampuh
-          echo "OISD_SMALL=https://small.oisd.nl/dnsmasq" >> $GITHUB_ENV
-          echo "OISD_NSFW=https://nsfw.oisd.nl/dnsmasq" >> $GITHUB_ENV
           
           echo "RULE_ECO=https://raw.githubusercontent.com/jadahmambu/ocrule/main/rule_eco.txt" >> $GITHUB_ENV
           echo "RULE_MICROSOFT=https://raw.githubusercontent.com/jadahmambu/ocrule/main/rule_microsoft.txt" >> $GITHUB_ENV
@@ -66,14 +63,8 @@ jobs:
           
           # 3. BANK-ID
           wget -qO ./community/data/bank-id $RULE_BANK_ID || echo "full:ex.com" > ./community/data/bank-id
-          
-          # 4. OISD SMALL (Menggantikan OISD FULL agar ringan)
-          curl -fsSL $OISD_SMALL | perl -ne '/^server=\/([^\/]+)\// && print "$1\n"' > ./community/data/oisd-full || echo "full:ex.com" > ./community/data/oisd-full
 
-          # 5. OISD NSFW
-          curl -fsSL $OISD_NSFW | perl -ne '/^server=\/([^\/]+)\// && print "$1\n"' > ./community/data/oisd-nsfw || echo "full:ex.com" > ./community/data/oisd-nsfw
-
-          # 6. RULE-ECO
+          # 4. RULE-ECO
           wget -qO ./community/data/rule-eco-raw $RULE_ECO || echo "full:ex.com" > ./community/data/rule-eco-raw
           sed -i 's/\r//g' ./community/data/rule-eco-raw || true
           > ./community/data/rule-eco
@@ -88,7 +79,7 @@ jobs:
             fi
           done < ./community/data/rule-eco-raw
 
-          # 7. RULE-MICROSOFT
+          # 5. RULE-MICROSOFT
           wget -qO ./community/data/rule-microsoft-raw $RULE_MICROSOFT || echo "full:ex.com" > ./community/data/rule-microsoft-raw
           sed -i 's/\r//g' ./community/data/rule-microsoft-raw || true
           > ./community/data/rule-microsoft
@@ -103,7 +94,7 @@ jobs:
             fi
           done < ./community/data/rule-microsoft-raw
 
-          # 8. RULE-SOSMED
+          # 6. RULE-SOSMED
           wget -qO ./community/data/rule-sosmed-raw $RULE_SOSMED || echo "full:ex.com" > ./community/data/rule-sosmed-raw
           sed -i 's/\r//g' ./community/data/rule-sosmed-raw || true
           > ./community/data/sosmed
@@ -118,7 +109,7 @@ jobs:
             fi
           done < ./community/data/rule-sosmed-raw
 
-          # 9. RULE-STREAMING
+          # 7. RULE-STREAMING
           wget -qO ./community/data/rule-streaming-raw $RULE_STREAMING || echo "full:ex.com" > ./community/data/rule-streaming-raw
           sed -i 's/\r//g' ./community/data/rule-streaming-raw || true
           > ./community/data/streaming
@@ -133,7 +124,7 @@ jobs:
             fi
           done < ./community/data/rule-streaming-raw
 
-          # 10. RULE-VIDCONFERENCE
+          # 8. RULE-VIDCONFERENCE
           wget -qO ./community/data/rule-vidconference-raw $RULE_VIDCONFERENCE || echo "full:ex.com" > ./community/data/rule-vidconference-raw
           sed -i 's/\r//g' ./community/data/rule-vidconference-raw || true
           > ./community/data/vidconference
@@ -152,23 +143,6 @@ jobs:
           echo "full:example-direct.com" > ./community/data/cn
           echo "full:example-proxy.com" > ./community/data/geolocation-cn
 
-      - name: Filter and append d3ward to rule-ads
-        run: |
-          python3 -c '
-          import requests
-          try:
-              url = "https://raw.githubusercontent.com/d3ward/toolz/master/src/d3host.txt"
-              response = requests.get(url, timeout=10)
-              filtered_lines = [line.replace("0.0.0.0 ", "") for line in response.text.split("\n") if "0.0.0.0 " in line]
-          except Exception:
-              filtered_lines = []
-            
-          with open("./community/data/rule-ads", "a") as file:
-              for line in filtered_lines:
-                  if line.strip():
-                      file.write(line.strip() + "\n")
-          '
-
       - name: Automated Dependency Patcher & Deduplication
         run: |
           grep -hroE 'include:[a-zA-Z0-9\.\-]+' ./community/data/ | awk -F: '{print tolower($2)}' | sort -u | while read -r list_name; do
@@ -178,7 +152,7 @@ jobs:
             fi
           done
           
-          # Lakukan pembersihan baris ganda di setiap file data
+          # Hapus baris duplikat di setiap file
           for f in ./community/data/*; do
             if [ -f "$f" ]; then
               sort -u "$f" -o "$f"
