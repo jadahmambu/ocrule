@@ -62,26 +62,21 @@ jobs:
           # 1. ANTISCAM
           wget -qO ./community/data/antiscam $ANTISCAM || echo "full:ex.com" > ./community/data/antiscam
           sed -i '/[^a-zA-Z0-9\.\-]/d' ./community/data/antiscam || true
-          cp ./community/data/antiscam antiscam.txt
           
           # 2. RULE-ADS
           wget -qO ./community/data/rule-ads $RULE_ADS_EXTENDED || echo "full:ex.com" > ./community/data/rule-ads
           
           # 3. RULE-MALICIOUS
           wget -qO ./community/data/rule-malicious $MALICIOUS_HOST || echo "full:ex.com" > ./community/data/rule-malicious
-          cp ./community/data/rule-malicious rule-malicious.txt
           
           # 4. BANK-ID
           wget -qO ./community/data/bank-id $RULE_BANK_ID || echo "full:ex.com" > ./community/data/bank-id
-          cp ./community/data/bank-id bank-id.txt
           
           # 5. OISD FULL
           curl -fsSL $OISD_FULL | perl -ne '/^server=\/([^\/]+)\// && print "$1\n"' > ./community/data/oisd-full || echo "full:ex.com" > ./community/data/oisd-full
-          cp ./community/data/oisd-full oisd-full.txt
 
           # 6. OISD NSFW
           curl -fsSL $OISD_NSFW | perl -ne '/^server=\/([^\/]+)\// && print "$1\n"' > ./community/data/oisd-nsfw || echo "full:ex.com" > ./community/data/oisd-nsfw
-          cp ./community/data/oisd-nsfw oisd-nsfw.txt
 
           # 7. RULE-ECO
           wget -qO ./community/data/rule-eco-raw $RULE_ECO || echo "full:ex.com" > ./community/data/rule-eco-raw
@@ -97,7 +92,6 @@ jobs:
               echo "$line" >> ./community/data/rule-eco
             fi
           done < ./community/data/rule-eco-raw
-          cp ./community/data/rule-eco rule-eco.txt
 
           # 8. RULE-MICROSOFT
           wget -qO ./community/data/rule-microsoft-raw $RULE_MICROSOFT || echo "full:ex.com" > ./community/data/rule-microsoft-raw
@@ -113,9 +107,8 @@ jobs:
               echo "$line" >> ./community/data/rule-microsoft
             fi
           done < ./community/data/rule-microsoft-raw
-          cp ./community/data/rule-microsoft rule-microsoft.txt
 
-          # 9. ADGUARD DNS REJECT (Ekstraksi via Python dengan passing ENV yang aman)
+          # 9. ADGUARD DNS REJECT (Ekstraksi via Python)
           python3 -c '
           import os, urllib.request, re
           url = os.environ.get("ADGUARD_DNS_REJECT_URL")
@@ -138,7 +131,6 @@ jobs:
           if [ ! -s ./community/data/adguard-dns ]; then
             echo "full:adguard-dns-dummy.com" > ./community/data/adguard-dns
           fi
-          cp ./community/data/adguard-dns adguard-dns.txt
 
           # 10. RULE-SOSMED
           wget -qO ./community/data/rule-sosmed-raw $RULE_SOSMED || echo "full:ex.com" > ./community/data/rule-sosmed-raw
@@ -154,7 +146,6 @@ jobs:
               echo "$line" >> ./community/data/sosmed
             fi
           done < ./community/data/rule-sosmed-raw
-          cp ./community/data/sosmed sosmed.txt
 
           # 11. RULE-STREAMING
           wget -qO ./community/data/rule-streaming-raw $RULE_STREAMING || echo "full:ex.com" > ./community/data/rule-streaming-raw
@@ -170,7 +161,6 @@ jobs:
               echo "$line" >> ./community/data/streaming
             fi
           done < ./community/data/rule-streaming-raw
-          cp ./community/data/streaming streaming.txt
 
           # 12. RULE-VIDCONFERENCE
           wget -qO ./community/data/rule-vidconference-raw $RULE_VIDCONFERENCE || echo "full:ex.com" > ./community/data/rule-vidconference-raw
@@ -186,7 +176,6 @@ jobs:
               echo "$line" >> ./community/data/vidconference
             fi
           done < ./community/data/rule-vidconference-raw
-          cp ./community/data/vidconference vidconference.txt
 
           # SYARAT COMPILER: Buat berkas cn dan geolocation-cn dummy
           echo "full:example-direct.com" > ./community/data/cn
@@ -217,7 +206,6 @@ jobs:
               echo "full:example-fix-$list_name.com" > "./community/data/$list_name"
             fi
           done
-          cp ./community/data/rule-ads rule-ads.txt
 
       - name: Build geosite.dat using Go Install
         run: |
@@ -225,26 +213,12 @@ jobs:
           ~/go/bin/domain-list-community --datapath=./community/data
           mv ./dlc.dat ./publish/geosite.dat
 
-      - name: Move files, generate sha256 hash & cleanup empty files
+      - name: Move files & generate sha256 hash
         run: |
           [ -f ./geoip.dat ] && install -Dp ./geoip.dat ./publish/geoip.dat || true
           [ -f ./geoip.dat.sha256sum ] && install -Dp ./geoip.dat.sha256sum ./publish/geoip.dat.sha256sum || true
-          install -p {antiscam,rule-ads,rule-malicious,bank-id,oisd-full,oisd-nsfw,rule-eco,rule-microsoft,adguard-dns,sosmed,streaming,vidconference}.txt ./publish/ || true
           cd ./publish || exit 1
           sha256sum geosite.dat > geosite.dat.sha256sum
-
-      - name: Convert to Sing-Box geoassets
-        run: |
-          wget -q https://github.com/malikshi/Notes/releases/download/v2box/v2box || true
-          if [ -f ./v2box ]; then
-            chmod +x v2box
-            [ -f ./publish/geoip.dat ] && ./v2box migrate geoip -i ./publish/geoip.dat -o geoip.db && mv -f geoip.db ./publish/ || true
-            ./v2box migrate geosite -i ./publish/geosite.dat -o geosite.db && mv -f geosite.db ./publish/ || true
-          fi
-          cd ./publish || exit 1
-          [ -f geosite.db ] && sha256sum geosite.db > geosite.db.sha256sum || true
-          [ -f geoip.db ] && sha256sum geoip.db > geoip.db.sha256sum || true
-          find . -type f -empty -delete
 
       - name: Deploy to GitHub Releases
         uses: softprops/action-gh-release@v2
@@ -253,7 +227,11 @@ jobs:
           tag_name: latest
           draft: false
           prerelease: false
-          files: ./publish/*
+          files: |
+            ./publish/geoip.dat
+            ./publish/geoip.dat.sha256sum
+            ./publish/geosite.dat
+            ./publish/geosite.dat.sha256sum
           overwrite_files: true
           make_latest: true
           fail_on_unmatched_files: false
