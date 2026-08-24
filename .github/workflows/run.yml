@@ -39,7 +39,6 @@ jobs:
           echo "RULE_BANK_ID=https://raw.githubusercontent.com/malikshi/v2ray-rules-dat/rule/rule_bank-id.txt" >> $GITHUB_ENV
           echo "OISD_FULL=https://big.oisd.nl/dnsmasq" >> $GITHUB_ENV
           echo "OISD_NSFW=https://nsfw.oisd.nl/dnsmasq" >> $GITHUB_ENV
-          echo "ADGUARD_DNS_REJECT_URL=https://adguardteam.github.io/AdGuardSDNSFilter/Filters/filter.txt" >> $GITHUB_ENV
           
           echo "RULE_ECO=https://raw.githubusercontent.com/jadahmambu/ocrule/main/rule_eco.txt" >> $GITHUB_ENV
           echo "RULE_MICROSOFT=https://raw.githubusercontent.com/jadahmambu/ocrule/main/rule_microsoft.txt" >> $GITHUB_ENV
@@ -107,31 +106,7 @@ jobs:
             fi
           done < ./community/data/rule-microsoft-raw
 
-          # 9. ADGUARD DNS REJECT (Ekstraksi via Python)
-          python3 -c '
-          import os, urllib.request, re
-          url = os.environ.get("ADGUARD_DNS_REJECT_URL")
-          try:
-              req = urllib.request.urlopen(url)
-              lines = req.read().decode("utf-8").splitlines()
-              domains = set()
-              for line in lines:
-                  line = line.strip()
-                  if line.startswith("||") and not line.startswith("||*"):
-                      d = line[2:].split("^")[0].split("$")[0].rstrip(".")
-                      if re.match(r"^[a-zA-Z0-9][a-zA-Z0-9\.-]*[a-zA-Z0-9]\.[a-zA-Z]{2,}$", d) and ".." not in d and "-." not in d and ".-" not in d:
-                          domains.add(d)
-              with open("./community/data/adguard-dns", "w") as f:
-                  for d in sorted(domains):
-                      f.write(d + "\n")
-          except Exception as e:
-              print("AdGuard fetch error:", e)
-          '
-          if [ ! -s ./community/data/adguard-dns ]; then
-            echo "full:adguard-dns-dummy.com" > ./community/data/adguard-dns
-          fi
-
-          # 10. RULE-SOSMED
+          # 9. RULE-SOSMED
           wget -qO ./community/data/rule-sosmed-raw $RULE_SOSMED || echo "full:ex.com" > ./community/data/rule-sosmed-raw
           sed -i 's/\r//g' ./community/data/rule-sosmed-raw || true
           > ./community/data/sosmed
@@ -146,7 +121,7 @@ jobs:
             fi
           done < ./community/data/rule-sosmed-raw
 
-          # 11. RULE-STREAMING
+          # 10. RULE-STREAMING
           wget -qO ./community/data/rule-streaming-raw $RULE_STREAMING || echo "full:ex.com" > ./community/data/rule-streaming-raw
           sed -i 's/\r//g' ./community/data/rule-streaming-raw || true
           > ./community/data/streaming
@@ -161,7 +136,7 @@ jobs:
             fi
           done < ./community/data/rule-streaming-raw
 
-          # 12. RULE-VIDCONFERENCE
+          # 11. RULE-VIDCONFERENCE
           wget -qO ./community/data/rule-vidconference-raw $RULE_VIDCONFERENCE || echo "full:ex.com" > ./community/data/rule-vidconference-raw
           sed -i 's/\r//g' ./community/data/rule-vidconference-raw || true
           > ./community/data/vidconference
