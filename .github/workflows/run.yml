@@ -48,10 +48,10 @@ jobs:
           rm -rf community publish
           mkdir -p community/data publish
 
-      - name: Get geoip.dat Lite
+      - name: Get geoip.dat relative files
         run: |
-          # Mengunduh geoip.dat versi Lite agar ukurannya sangat kecil dan hemat memori
-          wget -q https://github.com/v2fly/geoip/releases/latest/download/geoip.dat -O ./publish/geoip.dat || true
+          # Menggunakan geoip.dat milik malikshi yang berukuran kecil/ringan
+          wget -q https://github.com/malikshi/geoip/raw/release/geoip.dat -O ./publish/geoip.dat || true
 
       - name: Create lists
         run: |
