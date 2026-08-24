@@ -35,9 +35,9 @@ jobs:
           
           echo "ANTISCAM=https://raw.githubusercontent.com/malikshi/antiscam/refs/heads/main/antiscam.txt" >> $GITHUB_ENV
           echo "RULE_ADS_EXTENDED=https://raw.githubusercontent.com/malikshi/v2ray-rules-dat/rule/rule_ads.txt" >> $GITHUB_ENV
-          echo "MALICIOUS_HOST=https://raw.githubusercontent.com/elliotwutingfeng/Inversion-DNSBL-Blocklists/main/Google_hostnames_light.txt" >> $GITHUB_ENV
           echo "RULE_BANK_ID=https://raw.githubusercontent.com/malikshi/v2ray-rules-dat/rule/rule_bank-id.txt" >> $GITHUB_ENV
-          echo "OISD_FULL=https://big.oisd.nl/dnsmasq" >> $GITHUB_ENV
+          # Menggunakan OISD Small agar jauh lebih ringan namun tetap ampuh
+          echo "OISD_SMALL=https://small.oisd.nl/dnsmasq" >> $GITHUB_ENV
           echo "OISD_NSFW=https://nsfw.oisd.nl/dnsmasq" >> $GITHUB_ENV
           
           echo "RULE_ECO=https://raw.githubusercontent.com/jadahmambu/ocrule/main/rule_eco.txt" >> $GITHUB_ENV
@@ -64,19 +64,16 @@ jobs:
           # 2. RULE-ADS
           wget -qO ./community/data/rule-ads $RULE_ADS_EXTENDED || echo "full:ex.com" > ./community/data/rule-ads
           
-          # 3. RULE-MALICIOUS
-          wget -qO ./community/data/rule-malicious $MALICIOUS_HOST || echo "full:ex.com" > ./community/data/rule-malicious
-          
-          # 4. BANK-ID
+          # 3. BANK-ID
           wget -qO ./community/data/bank-id $RULE_BANK_ID || echo "full:ex.com" > ./community/data/bank-id
           
-          # 5. OISD FULL
-          curl -fsSL $OISD_FULL | perl -ne '/^server=\/([^\/]+)\// && print "$1\n"' > ./community/data/oisd-full || echo "full:ex.com" > ./community/data/oisd-full
+          # 4. OISD SMALL (Menggantikan OISD FULL agar ringan)
+          curl -fsSL $OISD_SMALL | perl -ne '/^server=\/([^\/]+)\// && print "$1\n"' > ./community/data/oisd-full || echo "full:ex.com" > ./community/data/oisd-full
 
-          # 6. OISD NSFW
+          # 5. OISD NSFW
           curl -fsSL $OISD_NSFW | perl -ne '/^server=\/([^\/]+)\// && print "$1\n"' > ./community/data/oisd-nsfw || echo "full:ex.com" > ./community/data/oisd-nsfw
 
-          # 7. RULE-ECO
+          # 6. RULE-ECO
           wget -qO ./community/data/rule-eco-raw $RULE_ECO || echo "full:ex.com" > ./community/data/rule-eco-raw
           sed -i 's/\r//g' ./community/data/rule-eco-raw || true
           > ./community/data/rule-eco
@@ -91,7 +88,7 @@ jobs:
             fi
           done < ./community/data/rule-eco-raw
 
-          # 8. RULE-MICROSOFT
+          # 7. RULE-MICROSOFT
           wget -qO ./community/data/rule-microsoft-raw $RULE_MICROSOFT || echo "full:ex.com" > ./community/data/rule-microsoft-raw
           sed -i 's/\r//g' ./community/data/rule-microsoft-raw || true
           > ./community/data/rule-microsoft
@@ -106,7 +103,7 @@ jobs:
             fi
           done < ./community/data/rule-microsoft-raw
 
-          # 9. RULE-SOSMED
+          # 8. RULE-SOSMED
           wget -qO ./community/data/rule-sosmed-raw $RULE_SOSMED || echo "full:ex.com" > ./community/data/rule-sosmed-raw
           sed -i 's/\r//g' ./community/data/rule-sosmed-raw || true
           > ./community/data/sosmed
@@ -121,7 +118,7 @@ jobs:
             fi
           done < ./community/data/rule-sosmed-raw
 
-          # 10. RULE-STREAMING
+          # 9. RULE-STREAMING
           wget -qO ./community/data/rule-streaming-raw $RULE_STREAMING || echo "full:ex.com" > ./community/data/rule-streaming-raw
           sed -i 's/\r//g' ./community/data/rule-streaming-raw || true
           > ./community/data/streaming
@@ -136,7 +133,7 @@ jobs:
             fi
           done < ./community/data/rule-streaming-raw
 
-          # 11. RULE-VIDCONFERENCE
+          # 10. RULE-VIDCONFERENCE
           wget -qO ./community/data/rule-vidconference-raw $RULE_VIDCONFERENCE || echo "full:ex.com" > ./community/data/rule-vidconference-raw
           sed -i 's/\r//g' ./community/data/rule-vidconference-raw || true
           > ./community/data/vidconference
@@ -172,12 +169,19 @@ jobs:
                       file.write(line.strip() + "\n")
           '
 
-      - name: Automated Dependency Patcher (Fix Include Error)
+      - name: Automated Dependency Patcher & Deduplication
         run: |
           grep -hroE 'include:[a-zA-Z0-9\.\-]+' ./community/data/ | awk -F: '{print tolower($2)}' | sort -u | while read -r list_name; do
             if [ ! -f "./community/data/$list_name" ]; then
               echo "Membuat berkas dummy aman untuk dependensi: $list_name"
               echo "full:example-fix-$list_name.com" > "./community/data/$list_name"
+            fi
+          done
+          
+          # Lakukan pembersihan baris ganda di setiap file data
+          for f in ./community/data/*; do
+            if [ -f "$f" ]; then
+              sort -u "$f" -o "$f"
             fi
           done
 
