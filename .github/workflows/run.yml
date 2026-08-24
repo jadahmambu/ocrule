@@ -1,0 +1,261 @@
+name: Build V2Ray rules dat files
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - master
+    paths-ignore:
+      - "**/README.md"
+  schedule:
+    - cron: '30 17 * * *'
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.24'
+          cache: true
+
+      - name: Set timezone to WIB Jakarta
+        run: |
+          sudo ln -sf /usr/share/zoneinfo/Asia/Jakarta /etc/localtime
+          date
+
+      - name: Set variables
+        run: |
+          echo "RELEASE_NAME=Released on $(date +%Y%m%d%H%M)" >> $GITHUB_ENV
+          echo "TAG_NAME=$(date +%Y%m%d%H%M)" >> $GITHUB_ENV
+          
+          echo "ANTISCAM=https://raw.githubusercontent.com/malikshi/antiscam/refs/heads/main/antiscam.txt" >> $GITHUB_ENV
+          echo "RULE_ADS_EXTENDED=https://raw.githubusercontent.com/malikshi/v2ray-rules-dat/rule/rule_ads.txt" >> $GITHUB_ENV
+          echo "MALICIOUS_HOST=https://raw.githubusercontent.com/elliotwutingfeng/Inversion-DNSBL-Blocklists/main/Google_hostnames_light.txt" >> $GITHUB_ENV
+          echo "RULE_BANK_ID=https://raw.githubusercontent.com/malikshi/v2ray-rules-dat/rule/rule_bank-id.txt" >> $GITHUB_ENV
+          echo "OISD_FULL=https://big.oisd.nl/dnsmasq" >> $GITHUB_ENV
+          echo "OISD_NSFW=https://nsfw.oisd.nl/dnsmasq" >> $GITHUB_ENV
+          echo "ADGUARD_DNS_REJECT_URL=https://adguardteam.github.io/AdGuardSDNSFilter/Filters/filter.txt" >> $GITHUB_ENV
+          
+          echo "RULE_ECO=https://raw.githubusercontent.com/jadahmambu/ocrule/main/rule_eco.txt" >> $GITHUB_ENV
+          echo "RULE_MICROSOFT=https://raw.githubusercontent.com/jadahmambu/ocrule/main/rule_microsoft.txt" >> $GITHUB_ENV
+          echo "RULE_SOSMED=https://raw.githubusercontent.com/jadahmambu/ocrule/main/rule_sosmed.txt" >> $GITHUB_ENV
+          echo "RULE_STREAMING=https://raw.githubusercontent.com/jadahmambu/ocrule/main/rule_streaming.txt" >> $GITHUB_ENV
+          echo "RULE_VIDCONFERENCE=https://raw.githubusercontent.com/jadahmambu/ocrule/main/rule_videoconference.txt" >> $GITHUB_ENV
+
+      - name: Prepare Data Directory
+        run: |
+          rm -rf community publish
+          mkdir -p community/data publish
+
+      - name: Get geoip.dat relative files
+        run: |
+          wget -q https://github.com/malikshi/geoip/raw/release/geoip.dat || true
+          wget -q https://github.com/malikshi/geoip/raw/release/geoip.dat.sha256sum || true
+
+      - name: Create lists
+        run: |
+          # 1. ANTISCAM
+          wget -qO ./community/data/antiscam $ANTISCAM || echo "full:ex.com" > ./community/data/antiscam
+          sed -i '/[^a-zA-Z0-9\.\-]/d' ./community/data/antiscam || true
+          cp ./community/data/antiscam antiscam.txt
+          
+          # 2. RULE-ADS
+          wget -qO ./community/data/rule-ads $RULE_ADS_EXTENDED || echo "full:ex.com" > ./community/data/rule-ads
+          
+          # 3. RULE-MALICIOUS
+          wget -qO ./community/data/rule-malicious $MALICIOUS_HOST || echo "full:ex.com" > ./community/data/rule-malicious
+          cp ./community/data/rule-malicious rule-malicious.txt
+          
+          # 4. BANK-ID
+          wget -qO ./community/data/bank-id $RULE_BANK_ID || echo "full:ex.com" > ./community/data/bank-id
+          cp ./community/data/bank-id bank-id.txt
+          
+          # 5. OISD FULL
+          curl -fsSL $OISD_FULL | perl -ne '/^server=\/([^\/]+)\// && print "$1\n"' > ./community/data/oisd-full || echo "full:ex.com" > ./community/data/oisd-full
+          cp ./community/data/oisd-full oisd-full.txt
+
+          # 6. OISD NSFW
+          curl -fsSL $OISD_NSFW | perl -ne '/^server=\/([^\/]+)\// && print "$1\n"' > ./community/data/oisd-nsfw || echo "full:ex.com" > ./community/data/oisd-nsfw
+          cp ./community/data/oisd-nsfw oisd-nsfw.txt
+
+          # 7. RULE-ECO
+          wget -qO ./community/data/rule-eco-raw $RULE_ECO || echo "full:ex.com" > ./community/data/rule-eco-raw
+          sed -i 's/\r//g' ./community/data/rule-eco-raw || true
+          > ./community/data/rule-eco
+          while read -r line || [ -n "$line" ]; do
+            [[ -z "$line" || "$line" =~ ^# ]] && continue
+            if [[ "$line" =~ ^keyword: ]]; then
+              echo "$line" >> ./community/data/rule-eco
+            elif [[ "$line" =~ ^domain: ]]; then
+              echo "${line#domain:}" >> ./community/data/rule-eco
+            else
+              echo "$line" >> ./community/data/rule-eco
+            fi
+          done < ./community/data/rule-eco-raw
+          cp ./community/data/rule-eco rule-eco.txt
+
+          # 8. RULE-MICROSOFT
+          wget -qO ./community/data/rule-microsoft-raw $RULE_MICROSOFT || echo "full:ex.com" > ./community/data/rule-microsoft-raw
+          sed -i 's/\r//g' ./community/data/rule-microsoft-raw || true
+          > ./community/data/rule-microsoft
+          while read -r line || [ -n "$line" ]; do
+            [[ -z "$line" || "$line" =~ ^# ]] && continue
+            if [[ "$line" =~ ^keyword: ]]; then
+              echo "$line" >> ./community/data/rule-microsoft
+            elif [[ "$line" =~ ^domain: ]]; then
+              echo "${line#domain:}" >> ./community/data/rule-microsoft
+            else
+              echo "$line" >> ./community/data/rule-microsoft
+            fi
+          done < ./community/data/rule-microsoft-raw
+          cp ./community/data/rule-microsoft rule-microsoft.txt
+
+          # 9. ADGUARD DNS REJECT (Ekstraksi via Python dengan passing ENV yang aman)
+          python3 -c '
+          import os, urllib.request, re
+          url = os.environ.get("ADGUARD_DNS_REJECT_URL")
+          try:
+              req = urllib.request.urlopen(url)
+              lines = req.read().decode("utf-8").splitlines()
+              domains = set()
+              for line in lines:
+                  line = line.strip()
+                  if line.startswith("||") and not line.startswith("||*"):
+                      d = line[2:].split("^")[0].split("$")[0].rstrip(".")
+                      if re.match(r"^[a-zA-Z0-9][a-zA-Z0-9\.-]*[a-zA-Z0-9]\.[a-zA-Z]{2,}$", d) and ".." not in d and "-." not in d and ".-" not in d:
+                          domains.add(d)
+              with open("./community/data/adguard-dns", "w") as f:
+                  for d in sorted(domains):
+                      f.write(d + "\n")
+          except Exception as e:
+              print("AdGuard fetch error:", e)
+          '
+          if [ ! -s ./community/data/adguard-dns ]; then
+            echo "full:adguard-dns-dummy.com" > ./community/data/adguard-dns
+          fi
+          cp ./community/data/adguard-dns adguard-dns.txt
+
+          # 10. RULE-SOSMED
+          wget -qO ./community/data/rule-sosmed-raw $RULE_SOSMED || echo "full:ex.com" > ./community/data/rule-sosmed-raw
+          sed -i 's/\r//g' ./community/data/rule-sosmed-raw || true
+          > ./community/data/sosmed
+          while read -r line || [ -n "$line" ]; do
+            [[ -z "$line" || "$line" =~ ^# ]] && continue
+            if [[ "$line" =~ ^keyword: ]]; then
+              echo "$line" >> ./community/data/sosmed
+            elif [[ "$line" =~ ^domain: ]]; then
+              echo "${line#domain:}" >> ./community/data/sosmed
+            else
+              echo "$line" >> ./community/data/sosmed
+            fi
+          done < ./community/data/rule-sosmed-raw
+          cp ./community/data/sosmed sosmed.txt
+
+          # 11. RULE-STREAMING
+          wget -qO ./community/data/rule-streaming-raw $RULE_STREAMING || echo "full:ex.com" > ./community/data/rule-streaming-raw
+          sed -i 's/\r//g' ./community/data/rule-streaming-raw || true
+          > ./community/data/streaming
+          while read -r line || [ -n "$line" ]; do
+            [[ -z "$line" || "$line" =~ ^# ]] && continue
+            if [[ "$line" =~ ^keyword: ]]; then
+              echo "$line" >> ./community/data/streaming
+            elif [[ "$line" =~ ^domain: ]]; then
+              echo "${line#domain:}" >> ./community/data/streaming
+            else
+              echo "$line" >> ./community/data/streaming
+            fi
+          done < ./community/data/rule-streaming-raw
+          cp ./community/data/streaming streaming.txt
+
+          # 12. RULE-VIDCONFERENCE
+          wget -qO ./community/data/rule-vidconference-raw $RULE_VIDCONFERENCE || echo "full:ex.com" > ./community/data/rule-vidconference-raw
+          sed -i 's/\r//g' ./community/data/rule-vidconference-raw || true
+          > ./community/data/vidconference
+          while read -r line || [ -n "$line" ]; do
+            [[ -z "$line" || "$line" =~ ^# ]] && continue
+            if [[ "$line" =~ ^keyword: ]]; then
+              echo "$line" >> ./community/data/vidconference
+            elif [[ "$line" =~ ^domain: ]]; then
+              echo "${line#domain:}" >> ./community/data/vidconference
+            else
+              echo "$line" >> ./community/data/vidconference
+            fi
+          done < ./community/data/rule-vidconference-raw
+          cp ./community/data/vidconference vidconference.txt
+
+          # SYARAT COMPILER: Buat berkas cn dan geolocation-cn dummy
+          echo "full:example-direct.com" > ./community/data/cn
+          echo "full:example-proxy.com" > ./community/data/geolocation-cn
+
+      - name: Filter and append d3ward to rule-ads
+        run: |
+          python3 -c '
+          import requests
+          try:
+              url = "https://raw.githubusercontent.com/d3ward/toolz/master/src/d3host.txt"
+              response = requests.get(url, timeout=10)
+              filtered_lines = [line.replace("0.0.0.0 ", "") for line in response.text.split("\n") if "0.0.0.0 " in line]
+          except Exception:
+              filtered_lines = []
+            
+          with open("./community/data/rule-ads", "a") as file:
+              for line in filtered_lines:
+                  if line.strip():
+                      file.write(line.strip() + "\n")
+          '
+
+      - name: Automated Dependency Patcher (Fix Include Error)
+        run: |
+          grep -hroE 'include:[a-zA-Z0-9\.\-]+' ./community/data/ | awk -F: '{print tolower($2)}' | sort -u | while read -r list_name; do
+            if [ ! -f "./community/data/$list_name" ]; then
+              echo "Membuat berkas dummy aman untuk dependensi: $list_name"
+              echo "full:example-fix-$list_name.com" > "./community/data/$list_name"
+            fi
+          done
+          cp ./community/data/rule-ads rule-ads.txt
+
+      - name: Build geosite.dat using Go Install
+        run: |
+          go install github.com/v2fly/domain-list-community@latest
+          ~/go/bin/domain-list-community --datapath=./community/data
+          mv ./dlc.dat ./publish/geosite.dat
+
+      - name: Move files, generate sha256 hash & cleanup empty files
+        run: |
+          [ -f ./geoip.dat ] && install -Dp ./geoip.dat ./publish/geoip.dat || true
+          [ -f ./geoip.dat.sha256sum ] && install -Dp ./geoip.dat.sha256sum ./publish/geoip.dat.sha256sum || true
+          install -p {antiscam,rule-ads,rule-malicious,bank-id,oisd-full,oisd-nsfw,rule-eco,rule-microsoft,adguard-dns,sosmed,streaming,vidconference}.txt ./publish/ || true
+          cd ./publish || exit 1
+          sha256sum geosite.dat > geosite.dat.sha256sum
+
+      - name: Convert to Sing-Box geoassets
+        run: |
+          wget -q https://github.com/malikshi/Notes/releases/download/v2box/v2box || true
+          if [ -f ./v2box ]; then
+            chmod +x v2box
+            [ -f ./publish/geoip.dat ] && ./v2box migrate geoip -i ./publish/geoip.dat -o geoip.db && mv -f geoip.db ./publish/ || true
+            ./v2box migrate geosite -i ./publish/geosite.dat -o geosite.db && mv -f geosite.db ./publish/ || true
+          fi
+          cd ./publish || exit 1
+          [ -f geosite.db ] && sha256sum geosite.db > geosite.db.sha256sum || true
+          [ -f geoip.db ] && sha256sum geoip.db > geoip.db.sha256sum || true
+          find . -type f -empty -delete
+
+      - name: Deploy to GitHub Releases
+        uses: softprops/action-gh-release@v2
+        with:
+          name: latest
+          tag_name: latest
+          draft: false
+          prerelease: false
+          files: ./publish/*
+          overwrite_files: true
+          make_latest: true
+          fail_on_unmatched_files: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
