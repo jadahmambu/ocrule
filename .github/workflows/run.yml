@@ -48,9 +48,10 @@ jobs:
           rm -rf community publish
           mkdir -p community/data publish
 
-      - name: Get geoip.dat relative files
+      - name: Get geoip.dat Lite
         run: |
-          wget -q https://github.com/malikshi/geoip/raw/release/geoip.dat -O ./publish/geoip.dat || true
+          # Mengunduh geoip.dat versi Lite agar ukurannya sangat kecil dan hemat memori
+          wget -q https://github.com/v2fly/geoip/releases/latest/download/geoip.dat -O ./publish/geoip.dat || true
 
       - name: Create lists
         run: |
@@ -152,7 +153,7 @@ jobs:
             fi
           done
           
-          # Hapus baris duplikat di setiap file
+          # Hapus baris duplikat di setiap file untuk mengecilkan ukuran akhir
           for f in ./community/data/*; do
             if [ -f "$f" ]; then
               sort -u "$f" -o "$f"
