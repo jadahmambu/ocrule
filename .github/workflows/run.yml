@@ -60,9 +60,9 @@ jobs:
           wget -qO ./community/data/antiscam $ANTISCAM || echo "full:ex.com" > ./community/data/antiscam
           sed -i '/[^a-zA-Z0-9\.\-]/d' ./community/data/antiscam || true
           
-          # 2. RULE-ADS (Penggabungan Malikshi + Jadahmambu Adsblock)
+          # 2. RULE-ADS (Penggabungan Malikshi + Jadahmambu Adsblock dengan sanitasi prefiks)
           wget -qO ./community/data/rule-ads $RULE_ADS_EXTENDED || echo "full:ex.com" > ./community/data/rule-ads
-          wget -qO- $RULE_ADS_JADAHMAMBU | sed 's/\r//g' >> ./community/data/rule-ads
+          wget -qO- $RULE_ADS_JADAHMAMBU | sed 's/\r//g' | sed -E 's/^[a-zA-Z0-9_]+domain:/domain:/g' >> ./community/data/rule-ads
           
           # 3. BANK-ID
           wget -qO ./community/data/bank-id $RULE_BANK_ID || echo "full:ex.com" > ./community/data/bank-id
