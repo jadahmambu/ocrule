@@ -50,7 +50,6 @@ jobs:
 
       - name: Get geoip.dat relative files
         run: |
-          # Menggunakan geoip.dat milik malikshi yang berukuran kecil/ringan
           wget -q https://github.com/malikshi/geoip/raw/release/geoip.dat -O ./publish/geoip.dat || true
 
       - name: Create lists
@@ -65,7 +64,10 @@ jobs:
           # 3. BANK-ID
           wget -qO ./community/data/bank-id $RULE_BANK_ID || echo "full:ex.com" > ./community/data/bank-id
 
-          # 4. RULE-ECO
+          # 4. CATEGORY-PORN (Pemblokiran Situs Dewasa)
+          wget -qO ./community/data/category-porn https://raw.githubusercontent.com/v2fly/domain-list-community/master/data/category-porn || echo "full:porn-dummy.com" > ./community/data/category-porn
+
+          # 5. RULE-ECO
           wget -qO ./community/data/rule-eco-raw $RULE_ECO || echo "full:ex.com" > ./community/data/rule-eco-raw
           sed -i 's/\r//g' ./community/data/rule-eco-raw || true
           > ./community/data/rule-eco
@@ -80,7 +82,7 @@ jobs:
             fi
           done < ./community/data/rule-eco-raw
 
-          # 5. RULE-MICROSOFT
+          # 6. RULE-MICROSOFT
           wget -qO ./community/data/rule-microsoft-raw $RULE_MICROSOFT || echo "full:ex.com" > ./community/data/rule-microsoft-raw
           sed -i 's/\r//g' ./community/data/rule-microsoft-raw || true
           > ./community/data/rule-microsoft
@@ -95,7 +97,7 @@ jobs:
             fi
           done < ./community/data/rule-microsoft-raw
 
-          # 6. RULE-SOSMED
+          # 7. RULE-SOSMED
           wget -qO ./community/data/rule-sosmed-raw $RULE_SOSMED || echo "full:ex.com" > ./community/data/rule-sosmed-raw
           sed -i 's/\r//g' ./community/data/rule-sosmed-raw || true
           > ./community/data/sosmed
@@ -110,7 +112,7 @@ jobs:
             fi
           done < ./community/data/rule-sosmed-raw
 
-          # 7. RULE-STREAMING
+          # 8. RULE-STREAMING
           wget -qO ./community/data/rule-streaming-raw $RULE_STREAMING || echo "full:ex.com" > ./community/data/rule-streaming-raw
           sed -i 's/\r//g' ./community/data/rule-streaming-raw || true
           > ./community/data/streaming
@@ -125,7 +127,7 @@ jobs:
             fi
           done < ./community/data/rule-streaming-raw
 
-          # 8. RULE-VIDCONFERENCE
+          # 9. RULE-VIDCONFERENCE
           wget -qO ./community/data/rule-vidconference-raw $RULE_VIDCONFERENCE || echo "full:ex.com" > ./community/data/rule-vidconference-raw
           sed -i 's/\r//g' ./community/data/rule-vidconference-raw || true
           > ./community/data/vidconference
@@ -153,7 +155,7 @@ jobs:
             fi
           done
           
-          # Hapus baris duplikat di setiap file untuk mengecilkan ukuran akhir
+          # Hapus baris duplikat di setiap file
           for f in ./community/data/*; do
             if [ -f "$f" ]; then
               sort -u "$f" -o "$f"
