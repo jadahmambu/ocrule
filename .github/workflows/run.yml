@@ -41,7 +41,6 @@ jobs:
           echo "RULE_BANK_ID=https://raw.githubusercontent.com/malikshi/v2ray-rules-dat/rule/rule_bank-id.txt" >> $GITHUB_ENV
           echo "RULE_BANK_JADAHMAMBU=https://raw.githubusercontent.com/jadahmambu/ocrule/main/rule_bank.txt" >> $GITHUB_ENV
           
-          # Menggunakan OISD Big / Full
           echo "OISD_FULL=https://big.oisd.nl/dnsmasq" >> $GITHUB_ENV
           echo "ADGUARD_DNS=https://adguardteam.github.io/AdGuardSDNSFilter/Filters/filter.txt" >> $GITHUB_ENV
           
@@ -62,11 +61,7 @@ jobs:
 
       - name: Create lists
         run: |
-          # 1. ANTISCAM
-          wget -qO ./community/data/antiscam $ANTISCAM || echo "full:ex.com" > ./community/data/antiscam
-          sed -i '/[^a-zA-Z0-9\.\-]/d' ./community/data/antiscam || true
-          
-          # 2. RULE-ADS (Malikshi + Adsblock Jadahmambu)
+          # 1. RULE-ADS (Malikshi + Adsblock Jadahmambu)
           wget -qO ./community/data/rule-ads $RULE_ADS_EXTENDED || echo "full:ex.com" > ./community/data/rule-ads
           wget -qO- $RULE_ADS_JADAHMAMBU | sed 's/\r//g' | awk '
             !/^#/ && NF {
@@ -75,7 +70,7 @@ jobs:
             }
           ' >> ./community/data/rule-ads
           
-          # 3. BANK-ID (Malikshi + Jadahmambu + Fix Newline & Circular)
+          # 2. BANK-ID (Malikshi + Jadahmambu + Fix Newline & Circular)
           > ./community/data/bank-id
           wget -qO- $RULE_BANK_ID | sed 's/\r//g' >> ./community/data/bank-id || true
           echo "" >> ./community/data/bank-id
@@ -92,9 +87,14 @@ jobs:
             }
           ' >> ./community/data/bank-id
 
-          # 4. ADS-EXTRA (OISD FULL + AdGuard - Fast Engine)
+          # 3. ADS-EXTRA (GABUNGAN: OISD FULL + AdGuard + Malikshi Antiscam)
           > ./community/data/ads-extra
+
+          # A. OISD FULL
           curl -fsSL $OISD_FULL | perl -ne '/^server=\/([^\/]+)\// && print "$1\n"' >> ./community/data/ads-extra || true
+          echo "" >> ./community/data/ads-extra
+
+          # B. AdGuard DNS Filter
           wget -qO- $ADGUARD_DNS | sed 's/\r//g' | awk '
             !/^!/ && !/^#/ && NF {
               gsub(/^@@\|\|/, "");
@@ -103,20 +103,29 @@ jobs:
               if ($0 ~ /^[a-zA-Z0-9]([a-zA-Z0-9.-]*[a-zA-Z0-9])?\.[a-zA-Z]{2,}$/ && $0 !~ /\*/ && $0 !~ /\.\./) print $0
             }
           ' >> ./community/data/ads-extra || true
+          echo "" >> ./community/data/ads-extra
 
-          # 5. RULE-ECO
+          # C. Malikshi Antiscam
+          wget -qO- $ANTISCAM | sed 's/\r//g' | awk '
+            !/^#/ && NF {
+              gsub(/[^a-zA-Z0-9.-]/, "");
+              if (length($0) > 0 && $0 ~ /\./) print $0
+            }
+          ' >> ./community/data/ads-extra || true
+
+          # 4. RULE-ECO
           wget -qO- $RULE_ECO | sed 's/\r//g' | awk '!/^#/ && NF { if (/^domain:/) print substr($0, 8); else print $0 }' > ./community/data/rule-eco
 
-          # 6. RULE-MICROSOFT
+          # 5. RULE-MICROSOFT
           wget -qO- $RULE_MICROSOFT | sed 's/\r//g' | awk '!/^#/ && NF { if (/^domain:/) print substr($0, 8); else print $0 }' > ./community/data/rule-microsoft
 
-          # 7. RULE-SOSMED
+          # 6. RULE-SOSMED
           wget -qO- $RULE_SOSMED | sed 's/\r//g' | awk '!/^#/ && NF { if (/^domain:/) print substr($0, 8); else print $0 }' > ./community/data/sosmed
 
-          # 8. RULE-STREAMING
+          # 7. RULE-STREAMING
           wget -qO- $RULE_STREAMING | sed 's/\r//g' | awk '!/^#/ && NF { if (/^domain:/) print substr($0, 8); else print $0 }' > ./community/data/streaming
 
-          # 9. RULE-VIDCONFERENCE
+          # 8. RULE-VIDCONFERENCE
           wget -qO- $RULE_VIDCONFERENCE | sed 's/\r//g' | awk '!/^#/ && NF { if (/^domain:/) print substr($0, 8); else print $0 }' > ./community/data/vidconference
 
           # SYARAT COMPILER: Dummy rules
