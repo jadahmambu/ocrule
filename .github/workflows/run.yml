@@ -90,7 +90,7 @@ jobs:
             }
           ' >> ./community/data/bank-id
 
-          # 4. ADS-EXTRA (OISD + AdGuard - Fast AWK Engine)
+          # 4. ADS-EXTRA (OISD + AdGuard - Clean Wildcards)
           > ./community/data/ads-extra
           curl -fsSL $OISD_NSFW | perl -ne '/^server=\/([^\/]+)\// && print "$1\n"' >> ./community/data/ads-extra || true
           wget -qO- $ADGUARD_DNS | sed 's/\r//g' | awk '
@@ -98,7 +98,7 @@ jobs:
               gsub(/^@@\|\|/, "");
               gsub(/^\|\|/, "");
               gsub(/\^.*$/, "");
-              if ($0 ~ /\./) print $0
+              if ($0 ~ /\./ && $0 !~ /\*/ && $0 ~ /^[a-zA-Z0-9.-]+$/) print $0
             }
           ' >> ./community/data/ads-extra || true
 
