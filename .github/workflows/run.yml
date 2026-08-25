@@ -24,7 +24,6 @@ jobs:
         uses: actions/setup-go@v6
         with:
           go-version: '1.25.12'
-          cache: true
 
       - name: Set timezone to WIB Jakarta
         run: |
@@ -39,6 +38,7 @@ jobs:
           echo "ANTISCAM=https://raw.githubusercontent.com/malikshi/antiscam/refs/heads/main/antiscam.txt" >> $GITHUB_ENV
           echo "RULE_ADS_EXTENDED=https://raw.githubusercontent.com/malikshi/v2ray-rules-dat/rule/rule_ads.txt" >> $GITHUB_ENV
           echo "RULE_ADS_JADAHMAMBU=https://raw.githubusercontent.com/jadahmambu/ocrule/main/adsblock.txt" >> $GITHUB_ENV
+          echo "RULE_BANK_ID=https://raw.githubusercontent.com/malikshi/v2ray-rules-dat/rule/rule_bank-id.txt" >> $GITHUB_ENV
           echo "RULE_BANK_JADAHMAMBU=https://raw.githubusercontent.com/jadahmambu/ocrule/main/rule_bank.txt" >> $GITHUB_ENV
           echo "OISD_NSFW=https://nsfw.oisd.nl/dnsmasq" >> $GITHUB_ENV
           
@@ -73,20 +73,29 @@ jobs:
             fi
           done
           
-          # 3. BANK-ID (Sanitasi Circular Include)
-          wget -qO ./community/data/bank-id-raw $RULE_BANK_JADAHMAMBU || echo "full:ex.com" > ./community/data/bank-id-raw
-          sed -i 's/\r//g' ./community/data/bank-id-raw || true
+          # 3. BANK-ID (Penggabungan Malikshi + Sanitasi Total Jadahmambu)
           > ./community/data/bank-id
+          wget -qO- $RULE_BANK_ID | sed 's/\r//g' >> ./community/data/bank-id || true
+
+          wget -qO ./community/data/bank-id-raw $RULE_BANK_JADAHMAMBU || true
+          sed -i 's/\r//g' ./community/data/bank-id-raw || true
           while read -r line || [ -n "$line" ]; do
-            [[ -z "$line" || "$line" =~ ^# ]] && continue
-            [[ "$line" =~ include:bank-id ]] && continue
+            [[ -z "$line" || "$line" =~ ^# || "$line" =~ include:bank-id ]] && continue
             
-            if [[ "$line" =~ ^keyword: ]]; then
-              echo "$line" >> ./community/data/bank-id
-            elif [[ "$line" =~ ^domain: ]]; then
-              echo "${line#domain:}" >> ./community/data/bank-id
-            else
-              echo "$line" >> ./community/data/bank-id
+            clean=$(echo "$line" | sed -E 's/^[[:space:]]*-?[[:space:]]*//')
+            
+            if [[ "$clean" =~ ^DOMAIN-KEYWORD, ]]; then
+              echo "keyword:${clean#DOMAIN-KEYWORD,}" >> ./community/data/bank-id
+            elif [[ "$clean" =~ ^DOMAIN-SUFFIX, ]]; then
+              echo "${clean#DOMAIN-SUFFIX,}" >> ./community/data/bank-id
+            elif [[ "$clean" =~ ^DOMAIN, ]]; then
+              echo "full:${clean#DOMAIN,}" >> ./community/data/bank-id
+            elif [[ "$clean" =~ ^domain: ]]; then
+              echo "${clean#domain:}" >> ./community/data/bank-id
+            elif [[ "$clean" =~ ^keyword: ]]; then
+              echo "$clean" >> ./community/data/bank-id
+            elif [[ -n "$clean" && ! "$clean" =~ ^DST-PORT && ! "$clean" =~ ^IP-CIDR ]]; then
+              echo "$clean" >> ./community/data/bank-id
             fi
           done < ./community/data/bank-id-raw
 
