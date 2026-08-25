@@ -73,9 +73,10 @@ jobs:
             fi
           done
           
-          # 3. BANK-ID (Penggabungan Malikshi + Sanitasi Total Jadahmambu)
+          # 3. BANK-ID (Penggabungan Malikshi + Sanitasi Total Jadahmambu + Newline Fix)
           > ./community/data/bank-id
           wget -qO- $RULE_BANK_ID | sed 's/\r//g' >> ./community/data/bank-id || true
+          echo "" >> ./community/data/bank-id
 
           wget -qO ./community/data/bank-id-raw $RULE_BANK_JADAHMAMBU || true
           sed -i 's/\r//g' ./community/data/bank-id-raw || true
