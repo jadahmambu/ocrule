@@ -17,6 +17,9 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
       - name: Setup Go
         uses: actions/setup-go@v5
         with:
@@ -36,7 +39,7 @@ jobs:
           echo "ANTISCAM=https://raw.githubusercontent.com/malikshi/antiscam/refs/heads/main/antiscam.txt" >> $GITHUB_ENV
           echo "RULE_ADS_EXTENDED=https://raw.githubusercontent.com/malikshi/v2ray-rules-dat/rule/rule_ads.txt" >> $GITHUB_ENV
           echo "RULE_ADS_JADAHMAMBU=https://raw.githubusercontent.com/jadahmambu/ocrule/main/adsblock.txt" >> $GITHUB_ENV
-          echo "RULE_BANK_ID=https://raw.githubusercontent.com/malikshi/v2ray-rules-dat/rule/rule_bank-id.txt" >> $GITHUB_ENV
+          echo "RULE_BANK_JADAHMAMBU=https://raw.githubusercontent.com/jadahmambu/ocrule/main/rule_bank.txt" >> $GITHUB_ENV
           echo "OISD_NSFW=https://nsfw.oisd.nl/dnsmasq" >> $GITHUB_ENV
           
           echo "RULE_ECO=https://raw.githubusercontent.com/jadahmambu/ocrule/main/rule_eco.txt" >> $GITHUB_ENV
@@ -70,8 +73,20 @@ jobs:
             fi
           done
           
-          # 3. BANK-ID
-          wget -qO ./community/data/bank-id $RULE_BANK_ID || echo "full:ex.com" > ./community/data/bank-id
+          # 3. BANK-ID (Diambil dari jadahmambu/ocrule/rule_bank.txt)
+          wget -qO ./community/data/bank-id-raw $RULE_BANK_JADAHMAMBU || echo "full:ex.com" > ./community/data/bank-id-raw
+          sed -i 's/\r//g' ./community/data/bank-id-raw || true
+          > ./community/data/bank-id
+          while read -r line || [ -n "$line" ]; do
+            [[ -z "$line" || "$line" =~ ^# ]] && continue
+            if [[ "$line" =~ ^keyword: ]]; then
+              echo "$line" >> ./community/data/bank-id
+            elif [[ "$line" =~ ^domain: ]]; then
+              echo "${line#domain:}" >> ./community/data/bank-id
+            else
+              echo "$line" >> ./community/data/bank-id
+            fi
+          done < ./community/data/bank-id-raw
 
           # 4. OISD NSFW (Situs Dewasa)
           curl -fsSL $OISD_NSFW | perl -ne '/^server=\/([^\/]+)\// && print "$1\n"' > ./community/data/oisd-nsfw || echo "full:ex.com" > ./community/data/oisd-nsfw
