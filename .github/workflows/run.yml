@@ -1,93 +1,4 @@
-name: Build V2Ray rules dat files
-
-on:
-  workflow_dispatch:
-  push:
-    branches:
-      - master
-    paths-ignore:
-      - "**/README.md"
-  schedule:
-    - cron: '30 17 * * *'
-
-permissions:
-  contents: write
-
-jobs:
-  build:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v5
-
-      - name: Setup Go
-        uses: actions/setup-go@v6
-        with:
-          go-version: '1.25.12'
-
-      - name: Set timezone to WIB Jakarta
-        run: |
-          sudo ln -sf /usr/share/zoneinfo/Asia/Jakarta /etc/localtime
-          date
-
-      - name: Set variables
-        run: |
-          echo "RELEASE_NAME=Released on $(date +%Y%m%d%H%M)" >> $GITHUB_ENV
-          echo "TAG_NAME=$(date +%Y%m%d%H%M)" >> $GITHUB_ENV
-          
-          echo "ANTISCAM=https://raw.githubusercontent.com/malikshi/antiscam/refs/heads/main/antiscam.txt" >> $GITHUB_ENV
-          echo "RULE_ADS_EXTENDED=https://raw.githubusercontent.com/malikshi/v2ray-rules-dat/rule/rule_ads.txt" >> $GITHUB_ENV
-          echo "RULE_ADS_JADAHMAMBU=https://raw.githubusercontent.com/jadahmambu/ocrule/main/adsblock.txt" >> $GITHUB_ENV
-          echo "RULE_BANK_ID=https://raw.githubusercontent.com/malikshi/v2ray-rules-dat/rule/rule_bank-id.txt" >> $GITHUB_ENV
-          echo "RULE_BANK_JADAHMAMBU=https://raw.githubusercontent.com/jadahmambu/ocrule/main/rule_bank.txt" >> $GITHUB_ENV
-          
-          echo "OISD_FULL=https://big.oisd.nl/dnsmasq" >> $GITHUB_ENV
-          echo "ADGUARD_DNS=https://adguardteam.github.io/AdGuardSDNSFilter/Filters/filter.txt" >> $GITHUB_ENV
-          
-          echo "RULE_ECO=https://raw.githubusercontent.com/jadahmambu/ocrule/main/rule_eco.txt" >> $GITHUB_ENV
-          echo "RULE_MICROSOFT=https://raw.githubusercontent.com/jadahmambu/ocrule/main/rule_microsoft.txt" >> $GITHUB_ENV
-          echo "RULE_SOSMED=https://raw.githubusercontent.com/jadahmambu/ocrule/main/rule_sosmed.txt" >> $GITHUB_ENV
-          echo "RULE_STREAMING=https://raw.githubusercontent.com/jadahmambu/ocrule/main/rule_streaming.txt" >> $GITHUB_ENV
-          echo "RULE_VIDCONFERENCE=https://raw.githubusercontent.com/jadahmambu/ocrule/main/rule_videoconference.txt" >> $GITHUB_ENV
-
-      - name: Prepare Data Directory
-        run: |
-          rm -rf community publish
-          mkdir -p community/data publish
-
-      - name: Get geoip.dat relative files
-        run: |
-          wget -q https://github.com/malikshi/geoip/raw/release/geoip.dat -O ./publish/geoip.dat || true
-
-      - name: Create lists
-        run: |
-          # 1. RULE-ADS (Malikshi + Adsblock Jadahmambu)
-          wget -qO ./community/data/rule-ads $RULE_ADS_EXTENDED || echo "full:ex.com" > ./community/data/rule-ads
-          wget -qO- $RULE_ADS_JADAHMAMBU | sed 's/\r//g' | awk '
-            !/^#/ && NF {
-              gsub(/^[a-zA-Z0-9_-]+:/, "");
-              if (length($0) > 0) print $0
-            }
-          ' >> ./community/data/rule-ads
-          
-          # 2. BANK-ID (Malikshi + Jadahmambu + Fix Newline & Circular)
-          > ./community/data/bank-id
-          wget -qO- $RULE_BANK_ID | sed 's/\r//g' >> ./community/data/bank-id || true
-          echo "" >> ./community/data/bank-id
-
-          wget -qO- $RULE_BANK_JADAHMAMBU | sed 's/\r//g' | awk '
-            !/^#/ && !/include:bank-id/ && NF {
-              gsub(/^[ \t]*-?[ \t]*/, "");
-              if (/^DST-PORT/ || /^IP-CIDR/) next;
-              if (/^DOMAIN-KEYWORD,/) { print "keyword:" substr($0, 16); }
-              else if (/^DOMAIN-SUFFIX,/) { print substr($0, 15); }
-              else if (/^DOMAIN,/) { print "full:" substr($0, 8); }
-              else if (/^domain:/) { print substr($0, 8); }
-              else { print $0; }
-            }
-          ' >> ./community/data/bank-id
-
-          # 3. ADS-EXTRA (GABUNGAN: OISD FULL + AdGuard + Malikshi Antiscam)
+# 3. ADS-EXTRA (GABUNGAN: OISD FULL + AdGuard + Malikshi Antiscam)
           > ./community/data/ads-extra
 
           # A. OISD FULL
@@ -105,67 +16,11 @@ jobs:
           ' >> ./community/data/ads-extra || true
           echo "" >> ./community/data/ads-extra
 
-          # C. Malikshi Antiscam
+          # C. Malikshi Antiscam (Fix Trailing Dots & Invalid Chars)
           wget -qO- $ANTISCAM | sed 's/\r//g' | awk '
             !/^#/ && NF {
               gsub(/[^a-zA-Z0-9.-]/, "");
-              if (length($0) > 0 && $0 ~ /\./) print $0
+              gsub(/\.$/, ""); # Hapus titik di paling akhir domain jika ada
+              if ($0 ~ /^[a-zA-Z0-9]([a-zA-Z0-9.-]*[a-zA-Z0-9])?\.[a-zA-Z]{2,}$/ && $0 !~ /\*/ && $0 !~ /\.\./) print $0
             }
           ' >> ./community/data/ads-extra || true
-
-          # 4. RULE-ECO
-          wget -qO- $RULE_ECO | sed 's/\r//g' | awk '!/^#/ && NF { if (/^domain:/) print substr($0, 8); else print $0 }' > ./community/data/rule-eco
-
-          # 5. RULE-MICROSOFT
-          wget -qO- $RULE_MICROSOFT | sed 's/\r//g' | awk '!/^#/ && NF { if (/^domain:/) print substr($0, 8); else print $0 }' > ./community/data/rule-microsoft
-
-          # 6. RULE-SOSMED
-          wget -qO- $RULE_SOSMED | sed 's/\r//g' | awk '!/^#/ && NF { if (/^domain:/) print substr($0, 8); else print $0 }' > ./community/data/sosmed
-
-          # 7. RULE-STREAMING
-          wget -qO- $RULE_STREAMING | sed 's/\r//g' | awk '!/^#/ && NF { if (/^domain:/) print substr($0, 8); else print $0 }' > ./community/data/streaming
-
-          # 8. RULE-VIDCONFERENCE
-          wget -qO- $RULE_VIDCONFERENCE | sed 's/\r//g' | awk '!/^#/ && NF { if (/^domain:/) print substr($0, 8); else print $0 }' > ./community/data/vidconference
-
-          # SYARAT COMPILER: Dummy rules
-          echo "full:example-direct.com" > ./community/data/cn
-          echo "full:example-proxy.com" > ./community/data/geolocation-cn
-
-      - name: Automated Dependency Patcher & Deduplication
-        run: |
-          grep -hroE 'include:[a-zA-Z0-9\.\-]+' ./community/data/ | awk -F: '{print tolower($2)}' | sort -u | while read -r list_name; do
-            if [ ! -f "./community/data/$list_name" ]; then
-              echo "Membuat berkas dummy aman untuk dependensi: $list_name"
-              echo "full:example-fix-$list_name.com" > "./community/data/$list_name"
-            fi
-          done
-          
-          # Hapus seluruh baris duplikat secara efisien
-          for f in ./community/data/*; do
-            if [ -f "$f" ]; then
-              sort -u "$f" -o "$f"
-            fi
-          done
-
-      - name: Build geosite.dat using Go Install
-        run: |
-          go install github.com/v2fly/domain-list-community@latest
-          ~/go/bin/domain-list-community --datapath=./community/data
-          mv ./dlc.dat ./publish/geosite.dat
-
-      - name: Deploy to GitHub Releases
-        uses: softprops/action-gh-release@v3
-        with:
-          name: latest
-          tag_name: latest
-          draft: false
-          prerelease: false
-          files: |
-            ./publish/geoip.dat
-            ./publish/geosite.dat
-          overwrite_files: true
-          make_latest: true
-          fail_on_unmatched_files: false
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
