@@ -40,7 +40,9 @@ jobs:
           echo "RULE_ADS_JADAHMAMBU=https://raw.githubusercontent.com/jadahmambu/ocrule/main/adsblock.txt" >> $GITHUB_ENV
           echo "RULE_BANK_ID=https://raw.githubusercontent.com/malikshi/v2ray-rules-dat/rule/rule_bank-id.txt" >> $GITHUB_ENV
           echo "RULE_BANK_JADAHMAMBU=https://raw.githubusercontent.com/jadahmambu/ocrule/main/rule_bank.txt" >> $GITHUB_ENV
-          echo "OISD_NSFW=https://nsfw.oisd.nl/dnsmasq" >> $GITHUB_ENV
+          
+          # Menggunakan OISD Big / Full
+          echo "OISD_FULL=https://big.oisd.nl/dnsmasq" >> $GITHUB_ENV
           echo "ADGUARD_DNS=https://adguardteam.github.io/AdGuardSDNSFilter/Filters/filter.txt" >> $GITHUB_ENV
           
           echo "RULE_ECO=https://raw.githubusercontent.com/jadahmambu/ocrule/main/rule_eco.txt" >> $GITHUB_ENV
@@ -90,9 +92,9 @@ jobs:
             }
           ' >> ./community/data/bank-id
 
-          # 4. ADS-EXTRA (OISD + AdGuard - Clean Invalid Hyphens & RFC Validation)
+          # 4. ADS-EXTRA (OISD FULL + AdGuard - Fast Engine)
           > ./community/data/ads-extra
-          curl -fsSL $OISD_NSFW | perl -ne '/^server=\/([^\/]+)\// && print "$1\n"' >> ./community/data/ads-extra || true
+          curl -fsSL $OISD_FULL | perl -ne '/^server=\/([^\/]+)\// && print "$1\n"' >> ./community/data/ads-extra || true
           wget -qO- $ADGUARD_DNS | sed 's/\r//g' | awk '
             !/^!/ && !/^#/ && NF {
               gsub(/^@@\|\|/, "");
