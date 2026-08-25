@@ -45,54 +45,11 @@ Gunakan tautan berikut untuk dimasukkan ke dalam `rule-providers` OpenClash Anda
 
 ---
 
-## 🛠️ Contoh Integrasi `config.yaml` OpenClash
+---
 
-```yaml
-rule-providers:
-  my-geosite:
-    type: http
-    behavior: domain
-    format: mrs
-    url: "[https://github.com/USERNAME/REPO_ANDA/releases/latest/download/geosite.dat](https://github.com/USERNAME/REPO_ANDA/releases/latest/download/geosite.dat)"
-    path: ./rule_provider/geosite.dat
-    interval: 86400
+Terima kasih kepada para penyedia sumber data domain:
+* 🌐 **Malikshi:** [v2ray-rules-dat](https://github.com/malikshi/v2ray-rules-dat) | [Antiscam](https://github.com/malikshi/antiscam)
+* 🌐 **Jadahmambu:** [ocrule](https://github.com/jadahmambu/ocrule)
+* 🛡️ **OISD Blocklist:** [oisd.nl](https://oisd.nl)
+* 🛡️ **AdGuard Team:** [AdGuardSDNSFilter](https://github.com/AdguardTeam/AdGuardSDNSFilter)
 
-rules:
-  # 1. Pengecualian Akses Lokal/LAN
-  - IP-CIDR,198.18.0.1/16,REJECT,no-resolve
-  - GEOIP,private,DIRECT,no-resolve
-
-  # 2. Pengecualian Khusus (Direct Dulu Sebelum Filter Iklan)
-  - DOMAIN-SUFFIX,googlesyndication.com,Direct
-
-  # 3. Logika Saklar Mihomo Core
-  - AND,((OR,((RULE-SET,EcoMode),(GEOSITE,rule-eco),(GEOIP,facebook))),(RULE-SET,BlockClient)),Eco Mode
-  - RULE-SET,BlockClient,BlockClient
-
-  # 4. Pemblokiran Massal (Iklan, Scam, NSFW & IP Malware)
-  - GEOSITE,rule-ads,REJECT
-  - GEOSITE,ads-extra,REJECT
-  - RULE-SET,Block,REJECT
-  - GEOIP,malware,REJECT,no-resolve
-  - GEOIP,phishing,REJECT,no-resolve
-
-  # 5. Aturan Unblock & Perbankan
-  - GEOSITE,rule-microsoft,Direct
-  - RULE-SET,Unblock,Unblock
-  - GEOSITE,bank-id,Direct
-  - RULE-SET,Direct,Direct
-
-  # 6. Routing Aplikasi Ke HK-VPN
-  - GEOSITE,netflix,HK-VPN
-  - GEOSITE,sosmed,HK-VPN
-  - GEOSITE,streaming,HK-VPN
-  - GEOSITE,vidconference,HK-VPN
-
-  # 7. Routing GEOIP Ke HK-VPN (Dengan Optimasi no-resolve)
-  - GEOIP,telegram,HK-VPN,no-resolve
-  - GEOIP,facebook,HK-VPN,no-resolve
-  - GEOIP,google,HK-VPN,no-resolve
-  - GEOIP,id,HK-VPN,no-resolve
-
-  # 8. Fallback Utama
-  - MATCH,HK-VPN
