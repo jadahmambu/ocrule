@@ -64,135 +64,60 @@ jobs:
           wget -qO ./community/data/antiscam $ANTISCAM || echo "full:ex.com" > ./community/data/antiscam
           sed -i '/[^a-zA-Z0-9\.\-]/d' ./community/data/antiscam || true
           
-          # 2. RULE-ADS (Penggabungan Malikshi + Sanitasi Total Adsblock Jadahmambu)
+          # 2. RULE-ADS (Malikshi + Adsblock Jadahmambu)
           wget -qO ./community/data/rule-ads $RULE_ADS_EXTENDED || echo "full:ex.com" > ./community/data/rule-ads
-          wget -qO- $RULE_ADS_JADAHMAMBU | sed 's/\r//g' | while read -r line || [ -n "$line" ]; do
-            [[ -z "$line" || "$line" =~ ^# ]] && continue
-            clean_line=$(echo "$line" | sed -E 's/^[a-zA-Z0-9_-]+://g')
-            if [[ -n "$clean_line" ]]; then
-              echo "$clean_line" >> ./community/data/rule-ads
-            fi
-          done
+          wget -qO- $RULE_ADS_JADAHMAMBU | sed 's/\r//g' | awk '
+            !/^#/ && NF {
+              gsub(/^[a-zA-Z0-9_-]+:/, "");
+              if (length($0) > 0) print $0
+            }
+          ' >> ./community/data/rule-ads
           
-          # 3. BANK-ID (Penggabungan Malikshi + Sanitasi Total Jadahmambu + Newline Fix)
+          # 3. BANK-ID (Malikshi + Jadahmambu + Fix Newline & Circular)
           > ./community/data/bank-id
           wget -qO- $RULE_BANK_ID | sed 's/\r//g' >> ./community/data/bank-id || true
           echo "" >> ./community/data/bank-id
 
-          wget -qO ./community/data/bank-id-raw $RULE_BANK_JADAHMAMBU || true
-          sed -i 's/\r//g' ./community/data/bank-id-raw || true
-          while read -r line || [ -n "$line" ]; do
-            [[ -z "$line" || "$line" =~ ^# || "$line" =~ include:bank-id ]] && continue
-            
-            clean=$(echo "$line" | sed -E 's/^[[:space:]]*-?[[:space:]]*//')
-            
-            if [[ "$clean" =~ ^DOMAIN-KEYWORD, ]]; then
-              echo "keyword:${clean#DOMAIN-KEYWORD,}" >> ./community/data/bank-id
-            elif [[ "$clean" =~ ^DOMAIN-SUFFIX, ]]; then
-              echo "${clean#DOMAIN-SUFFIX,}" >> ./community/data/bank-id
-            elif [[ "$clean" =~ ^DOMAIN, ]]; then
-              echo "full:${clean#DOMAIN,}" >> ./community/data/bank-id
-            elif [[ "$clean" =~ ^domain: ]]; then
-              echo "${clean#domain:}" >> ./community/data/bank-id
-            elif [[ "$clean" =~ ^keyword: ]]; then
-              echo "$clean" >> ./community/data/bank-id
-            elif [[ -n "$clean" && ! "$clean" =~ ^DST-PORT && ! "$clean" =~ ^IP-CIDR ]]; then
-              echo "$clean" >> ./community/data/bank-id
-            fi
-          done < ./community/data/bank-id-raw
+          wget -qO- $RULE_BANK_JADAHMAMBU | sed 's/\r//g' | awk '
+            !/^#/ && !/include:bank-id/ && NF {
+              gsub(/^[ \t]*-?[ \t]*/, "");
+              if (/^DST-PORT/ || /^IP-CIDR/) next;
+              if (/^DOMAIN-KEYWORD,/) { print "keyword:" substr($0, 16); }
+              else if (/^DOMAIN-SUFFIX,/) { print substr($0, 15); }
+              else if (/^DOMAIN,/) { print "full:" substr($0, 8); }
+              else if (/^domain:/) { print substr($0, 8); }
+              else { print $0; }
+            }
+          ' >> ./community/data/bank-id
 
-          # 4. ADS-EXTRA (OPSI 2: Gabungan AdGuard DNS + OISD)
+          # 4. ADS-EXTRA (OISD + AdGuard - Fast AWK Engine)
           > ./community/data/ads-extra
-          
-          # A. Ekstrak domain dari OISD DNSmasq
           curl -fsSL $OISD_NSFW | perl -ne '/^server=\/([^\/]+)\// && print "$1\n"' >> ./community/data/ads-extra || true
-          echo "" >> ./community/data/ads-extra
-
-          # B. Ekstrak domain dari AdGuard DNS Filter
-          wget -qO- $ADGUARD_DNS | sed 's/\r//g' | while read -r line || [ -n "$line" ]; do
-            [[ -z "$line" || "$line" =~ ^\! || "$line" =~ ^# ]] && continue
-            clean_adg=$(echo "$line" | sed -E 's/^@@\|\|//; s/^\|\|//; s/\^$//; s/\^.*$//')
-            if [[ -n "$clean_adg" && "$clean_adg" =~ \. ]]; then
-              echo "$clean_adg" >> ./community/data/ads-extra
-            fi
-          done || true
+          wget -qO- $ADGUARD_DNS | sed 's/\r//g' | awk '
+            !/^!/ && !/^#/ && NF {
+              gsub(/^@@\|\|/, "");
+              gsub(/^\|\|/, "");
+              gsub(/\^.*$/, "");
+              if ($0 ~ /\./) print $0
+            }
+          ' >> ./community/data/ads-extra || true
 
           # 5. RULE-ECO
-          wget -qO ./community/data/rule-eco-raw $RULE_ECO || echo "full:ex.com" > ./community/data/rule-eco-raw
-          sed -i 's/\r//g' ./community/data/rule-eco-raw || true
-          > ./community/data/rule-eco
-          while read -r line || [ -n "$line" ]; do
-            [[ -z "$line" || "$line" =~ ^# ]] && continue
-            if [[ "$line" =~ ^keyword: ]]; then
-              echo "$line" >> ./community/data/rule-eco
-            elif [[ "$line" =~ ^domain: ]]; then
-              echo "${line#domain:}" >> ./community/data/rule-eco
-            else
-              echo "$line" >> ./community/data/rule-eco
-            fi
-          done < ./community/data/rule-eco-raw
+          wget -qO- $RULE_ECO | sed 's/\r//g' | awk '!/^#/ && NF { if (/^domain:/) print substr($0, 8); else print $0 }' > ./community/data/rule-eco
 
           # 6. RULE-MICROSOFT
-          wget -qO ./community/data/rule-microsoft-raw $RULE_MICROSOFT || echo "full:ex.com" > ./community/data/rule-microsoft-raw
-          sed -i 's/\r//g' ./community/data/rule-microsoft-raw || true
-          > ./community/data/rule-microsoft
-          while read -r line || [ -n "$line" ]; do
-            [[ -z "$line" || "$line" =~ ^# ]] && continue
-            if [[ "$line" =~ ^keyword: ]]; then
-              echo "$line" >> ./community/data/rule-microsoft
-            elif [[ "$line" =~ ^domain: ]]; then
-              echo "${line#domain:}" >> ./community/data/rule-microsoft
-            else
-              echo "$line" >> ./community/data/rule-microsoft
-            fi
-          done < ./community/data/rule-microsoft-raw
+          wget -qO- $RULE_MICROSOFT | sed 's/\r//g' | awk '!/^#/ && NF { if (/^domain:/) print substr($0, 8); else print $0 }' > ./community/data/rule-microsoft
 
           # 7. RULE-SOSMED
-          wget -qO ./community/data/rule-sosmed-raw $RULE_SOSMED || echo "full:ex.com" > ./community/data/rule-sosmed-raw
-          sed -i 's/\r//g' ./community/data/rule-sosmed-raw || true
-          > ./community/data/sosmed
-          while read -r line || [ -n "$line" ]; do
-            [[ -z "$line" || "$line" =~ ^# ]] && continue
-            if [[ "$line" =~ ^keyword: ]]; then
-              echo "$line" >> ./community/data/sosmed
-            elif [[ "$line" =~ ^domain: ]]; then
-              echo "${line#domain:}" >> ./community/data/sosmed
-            else
-              echo "$line" >> ./community/data/sosmed
-            fi
-          done < ./community/data/rule-sosmed-raw
+          wget -qO- $RULE_SOSMED | sed 's/\r//g' | awk '!/^#/ && NF { if (/^domain:/) print substr($0, 8); else print $0 }' > ./community/data/sosmed
 
           # 8. RULE-STREAMING
-          wget -qO ./community/data/rule-streaming-raw $RULE_STREAMING || echo "full:ex.com" > ./community/data/rule-streaming-raw
-          sed -i 's/\r//g' ./community/data/rule-streaming-raw || true
-          > ./community/data/streaming
-          while read -r line || [ -n "$line" ]; do
-            [[ -z "$line" || "$line" =~ ^# ]] && continue
-            if [[ "$line" =~ ^keyword: ]]; then
-              echo "$line" >> ./community/data/streaming
-            elif [[ "$line" =~ ^domain: ]]; then
-              echo "${line#domain:}" >> ./community/data/streaming
-            else
-              echo "$line" >> ./community/data/streaming
-            fi
-          done < ./community/data/rule-streaming-raw
+          wget -qO- $RULE_STREAMING | sed 's/\r//g' | awk '!/^#/ && NF { if (/^domain:/) print substr($0, 8); else print $0 }' > ./community/data/streaming
 
           # 9. RULE-VIDCONFERENCE
-          wget -qO ./community/data/rule-vidconference-raw $RULE_VIDCONFERENCE || echo "full:ex.com" > ./community/data/rule-vidconference-raw
-          sed -i 's/\r//g' ./community/data/rule-vidconference-raw || true
-          > ./community/data/vidconference
-          while read -r line || [ -n "$line" ]; do
-            [[ -z "$line" || "$line" =~ ^# ]] && continue
-            if [[ "$line" =~ ^keyword: ]]; then
-              echo "$line" >> ./community/data/vidconference
-            elif [[ "$line" =~ ^domain: ]]; then
-              echo "${line#domain:}" >> ./community/data/vidconference
-            else
-              echo "$line" >> ./community/data/vidconference
-            fi
-          done < ./community/data/rule-vidconference-raw
+          wget -qO- $RULE_VIDCONFERENCE | sed 's/\r//g' | awk '!/^#/ && NF { if (/^domain:/) print substr($0, 8); else print $0 }' > ./community/data/vidconference
 
-          # SYARAT COMPILER: Buat berkas cn dan geolocation-cn dummy
+          # SYARAT COMPILER: Dummy rules
           echo "full:example-direct.com" > ./community/data/cn
           echo "full:example-proxy.com" > ./community/data/geolocation-cn
 
@@ -205,7 +130,7 @@ jobs:
             fi
           done
           
-          # Hapus baris duplikat di setiap file
+          # Hapus seluruh baris duplikat secara efisien
           for f in ./community/data/*; do
             if [ -f "$f" ]; then
               sort -u "$f" -o "$f"
