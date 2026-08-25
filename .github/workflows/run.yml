@@ -41,6 +41,7 @@ jobs:
           echo "RULE_BANK_ID=https://raw.githubusercontent.com/malikshi/v2ray-rules-dat/rule/rule_bank-id.txt" >> $GITHUB_ENV
           echo "RULE_BANK_JADAHMAMBU=https://raw.githubusercontent.com/jadahmambu/ocrule/main/rule_bank.txt" >> $GITHUB_ENV
           echo "OISD_NSFW=https://nsfw.oisd.nl/dnsmasq" >> $GITHUB_ENV
+          echo "ADGUARD_DNS=https://adguardteam.github.io/AdGuardSDNSFilter/Filters/filter.txt" >> $GITHUB_ENV
           
           echo "RULE_ECO=https://raw.githubusercontent.com/jadahmambu/ocrule/main/rule_eco.txt" >> $GITHUB_ENV
           echo "RULE_MICROSOFT=https://raw.githubusercontent.com/jadahmambu/ocrule/main/rule_microsoft.txt" >> $GITHUB_ENV
@@ -100,8 +101,21 @@ jobs:
             fi
           done < ./community/data/bank-id-raw
 
-          # 4. OISD NSFW (Situs Dewasa)
-          curl -fsSL $OISD_NSFW | perl -ne '/^server=\/([^\/]+)\// && print "$1\n"' > ./community/data/oisd-nsfw || echo "full:ex.com" > ./community/data/oisd-nsfw
+          # 4. ADS-EXTRA (OPSI 2: Gabungan AdGuard DNS + OISD)
+          > ./community/data/ads-extra
+          
+          # A. Ekstrak domain dari OISD DNSmasq
+          curl -fsSL $OISD_NSFW | perl -ne '/^server=\/([^\/]+)\// && print "$1\n"' >> ./community/data/ads-extra || true
+          echo "" >> ./community/data/ads-extra
+
+          # B. Ekstrak domain dari AdGuard DNS Filter
+          wget -qO- $ADGUARD_DNS | sed 's/\r//g' | while read -r line || [ -n "$line" ]; do
+            [[ -z "$line" || "$line" =~ ^\! || "$line" =~ ^# ]] && continue
+            clean_adg=$(echo "$line" | sed -E 's/^@@\|\|//; s/^\|\|//; s/\^$//; s/\^.*$//')
+            if [[ -n "$clean_adg" && "$clean_adg" =~ \. ]]; then
+              echo "$clean_adg" >> ./community/data/ads-extra
+            fi
+          done || true
 
           # 5. RULE-ECO
           wget -qO ./community/data/rule-eco-raw $RULE_ECO || echo "full:ex.com" > ./community/data/rule-eco-raw
