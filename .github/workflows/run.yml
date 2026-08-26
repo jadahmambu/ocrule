@@ -61,7 +61,7 @@ jobs:
 
       - name: Get geoip.dat relative files
         run: |
-          wget -q https://github.com/malikshi/geoip/raw/release/geoip.dat -O ./publish/geoip.dat || true
+          wget -q https://github.com/Loyalsoldier/v2ray-rules-dat/releases/latest/download/geoip.dat -O ./publish/geoip.dat || true
 
       - name: Create lists
         run: |
