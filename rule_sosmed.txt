@@ -35,3 +35,6 @@ domain:kwai-pro.com
 domain:kwai.net
 domain:kwaicdn.com
 keyword:snackvideo
+domain:githubassets.com
+domain:githubusercontent.com
+domain:github.com
