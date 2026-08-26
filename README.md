@@ -1,6 +1,6 @@
 # V2Ray & OpenClash Custom Ruleset Generator
 
-[![Build V2Ray rules dat files](https://github.com/jadahmambu/ocrule/actions/workflows/build.yml/badge.svg)](https://github.com/jadahmambu/ocrulr/actions/workflows/build.yml)
+[![Build V2Ray rules dat files](https://github.com/jadahmambu/ocrule/actions/workflows/build.yml/badge.svg)](https://github.com/jadahmambu/ocrule/actions/workflows/build.yml)
 [![GitHub Release](https://img.shields.io/github/v/release/jadahmambu/ocrule?color=blue&label=Latest%20Release)](https://github.com/jadahmambu/ocrule/releases/latest)
 
 Repositori ini menyediakan berkas kompilasi harian otomatis `geosite.dat` dan `geoip.dat` yang dioptimalkan untuk **OpenClash**, **Mihomo (Clash Meta)**, **Sing-box**, dan **V2Ray/Xray**.
