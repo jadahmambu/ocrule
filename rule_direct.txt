@@ -3,9 +3,4 @@ domain:heytapmobi.com
 domain:heytapmobile.com
 domain:coloros.com
 domain:avcdn.net
-@port:3478
-@port:45395
-@port:16384-16448
-@port:42000-43000
-@port:50000-65535
-@port:5222
+
