@@ -43,7 +43,6 @@ jobs:
           echo "RULE_ADS_D3HOST=https://raw.githubusercontent.com/Turtlecute33/adblocktest/master/src/d3host.txt" >> $GITHUB_ENV
           echo "RULE_ADS_JADAHMAMBU=https://raw.githubusercontent.com/jadahmambu/ocrule/main/adsblock.txt" >> $GITHUB_ENV
           
-          echo "RULE_BANK_ID=https://raw.githubusercontent.com/malikshi/v2ray-rules-dat/rule/rule_bank-id.txt" >> $GITHUB_ENV
           echo "RULE_BANK_JADAHMAMBU=https://raw.githubusercontent.com/jadahmambu/ocrule/main/rule_bank.txt" >> $GITHUB_ENV
           
           echo "OISD_FULL=https://big.oisd.nl/dnsmasq" >> $GITHUB_ENV
@@ -83,11 +82,8 @@ jobs:
             }
           ' >> ./community/data/rule-ads || true
           
-          # 2. BANK-ID (Malikshi + Jadahmambu + Fix Newline & Circular)
+          # 2. BANK-ID (Jadahmambu)
           > ./community/data/bank-id
-          wget -qO- $RULE_BANK_ID | sed 's/\r//g' >> ./community/data/bank-id || true
-          echo "" >> ./community/data/bank-id
-
           wget -qO- $RULE_BANK_JADAHMAMBU | sed 's/\r//g' | awk '
             !/^#/ && !/include:bank-id/ && NF {
               gsub(/^[ \t]*-?[ \t]*/, "");
@@ -98,7 +94,7 @@ jobs:
               else if (/^domain:/) { print substr($0, 8); }
               else { print $0; }
             }
-          ' >> ./community/data/bank-id
+          ' >> ./community/data/bank-id || true
 
           # 3. ADS-EXTRA (GABUNGAN: OISD FULL + AdGuard + Direct Upstream AntiScam)
           > ./community/data/ads-extra
