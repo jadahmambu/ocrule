@@ -167,6 +167,8 @@ domain:shopee.co.id
 domain:shopee.com
 domain:shopeemobile.com
 domain:shopeesz.com
+domain:susercontent.com
+domain:shopeesz.com
 domain:shp.ee
 domain:bukalapak.com
 domain:lazada.co.id
