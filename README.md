@@ -15,8 +15,8 @@ Gunakan tautan rilis terbaru berikut langsung pada konfigurasi OpenClash, V2Ray,
 
 | Berkas | Tautan Unduhan Rilis Terbaru |
 | :--- | :--- |
-| **`geosite.dat`** | `https://github.com/jadahmambu/v2ray-rules-dat/releases/latest/download/geosite.dat` |
-| **`geoip.dat`** | `https://github.com/jadahmambu/v2ray-rules-dat/releases/latest/download/geoip.dat` |
+| **`geosite.dat`** | `https://github.com/jadahmambu/ocrule/releases/latest/download/geosite.dat` |
+| **`geoip.dat`** | `https://github.com/jadahmambu/ocrule/releases/latest/download/geoip.dat` |
 
 ---
 
