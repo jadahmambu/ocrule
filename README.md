@@ -1,108 +1,193 @@
-# V2Ray & OpenClash Custom Ruleset Generator
+# Custom V2Ray Rules Generator
 
-[![Build V2Ray rules dat files](https://github.com/jadahmambu/ocrule/actions/workflows/run.yml/badge.svg)](https://github.com/jadahmambu/ocrule/actions/workflows/run.yml)
-[![GitHub Release](https://img.shields.io/github/v/release/jadahmambu/ocrule?color=blue&label=Latest%20Release)](https://github.com/jadahmambu/ocrule/releases/latest)
+Repositori ini berisi berkas `geosite.dat` dan `geoip.dat` terkompilasi yang diperbarui secara otomatis setiap hari menggunakan GitHub Actions.
 
-Repositori ini menyediakan berkas kompilasi harian otomatis `geosite.dat` dan `geoip.dat` yang dioptimalkan untuk **OpenClash**, **Mihomo (Clash Meta)**, **Sing-box**, dan **V2Ray/Xray**.
-
-Proyek ini dirancang untuk memprioritaskan performa routing, pemblokiran iklan yang intensif, keandalan konektivitas perbankan Indonesia, serta kebebasan penuh dari ketergantungan infrastruktur pihak ketiga.
+## Sumber Data (Upstream)
+- Compiler Core: v2fly/domain-list-community
+- GeoIP Data: Loyalsoldier/v2ray-rules-dat
+- AdBlock & Trackers: Turtlecute33/adblocktest, OISD, AdGuard DNS Filter
+- AntiScam & Phishing: jarelllama/Scam-Blocklist, Discord-AntiScam/scam-links
+- Local & Custom Rules: jadahmambu/ocrule
 
 ---
 
-## 🚀 Tautan Unduhan Langsung (Direct Downloads)
+## Tag GEOSITE (geosite.dat)
 
-Gunakan tautan rilis terbaru berikut langsung pada konfigurasi OpenClash, V2Ray, atau skrip pembaruan otomatis Anda:
+Gunakan daftar tag ini untuk aturan berbasis domain (GEOSITE) di OpenClash / Mihomo:
 
-| Berkas | Tautan Unduhan Rilis Terbaru |
+| Nama Tag | Deskripsi & Cakupan |
 | :--- | :--- |
-| **`geosite.dat`** | `https://github.com/jadahmambu/ocrule/releases/latest/download/geosite.dat` |
-| **`geoip.dat`** | `https://github.com/jadahmambu/ocrule/releases/latest/download/geoip.dat` |
+| rule-ads | Pemblokir iklan, pelacak (tracker), scam, dan phishing. |
+| ads-extra | Aturan iklan tambahan dan elemen pelacak sekunder. |
+| bank-id | Situs perbankan Indonesia (BCA, Mandiri, BRI, BNI, dll). |
+| rule-eco | Domain umum yang direkomendasikan masuk rute DIRECT (termasuk isi rule_direct.txt). |
+| rule-microsoft | Layanan dan server pembaruan Microsoft / Windows. |
+| sosmed | Media sosial (Facebook, Instagram, WhatsApp, TikTok, Twitter/X). |
+| streaming | Layanan streaming video & musik (YouTube, Netflix, Disney+, Spotify). |
+| vidconference | Platform rapat virtual (Zoom, Microsoft Teams, Google Meet). |
 
 ---
 
-## 🏷️ Daftar Tag Geosite yang Tersedia
+## Tag GEOIP (geoip.dat)
 
-Seluruh domain disaring, dibersihkan dari duplikat (*deduplicated*), dan dikompilasi ke dalam tag-tag berikut:
+Gunakan daftar tag ini untuk aturan berbasis alamat IP (GEOIP) di OpenClash / Mihomo:
 
-| Nama Tag | Deskripsi & Sumber Domain | Peruntukan Akses |
-| :--- | :--- | :--- |
-| **`rule-ads`** | Pemblokiran iklan dasar & *trackers* (Turtlecute33 D3Host + Jadahmambu). | `REJECT` / `Block` |
-| **`ads-extra`** | Pemblokiran iklan tingkat lanjut & malware/phishing (OISD Full + AdGuard DNS + AntiScam jarelllama & Discord-AntiScam). | `REJECT` / `Block` |
-| **`bank-id`** | Domain Perbankan Indonesia, FinTech, & E-Wallet (BCA, Mandiri, BRI, BNI, GoPay, OVO, Dana, ShopeePay, dll). | `DIRECT` |
-| **`rule-eco`** | Domain ekosistem, update sistem (OPPO, ColorOS, Avast), dan kustomasi direktori lokal (`rule_direct.txt`). | `DIRECT` |
-| **`rule-microsoft`** | Layanan & ekosistem Microsoft (Windows Update, Office365, Azure, Teams). | `DIRECT` / Proxy |
-| **`sosmed`** | Media Sosial populer (Facebook, Instagram, TikTok, Twitter/X, WhatsApp). | Proxy / `DIRECT` |
-| **`streaming`** | Platform Streaming Video & Musik (YouTube, Netflix, Disney+, Spotify). | Proxy / `DIRECT` |
-| **`vidconference`** | Aplikasi Konferensi Video (Zoom, Google Meet, Microsoft Teams). | `DIRECT` |
+| Nama Tag | Deskripsi & Cakupan |
+| :--- | :--- |
+| private | IP Lokal/LAN (192.168.x.x, 10.x.x.x, 127.0.0.1, CGNAT 100.64.x.x). |
+| id | Seluruh alokasi blok IP publik penyedia internet di Indonesia (Indihome, Telkomsel, XL, Biznet, dll). |
+| telegram | Blok IP server pusat dan CDN aplikasi Telegram. |
+| netflix | Blok IP server infrastruktur streaming Netflix. |
+| google | Blok IP server dan layanan infrastruktur Google. |
+| facebook | Blok IP server Meta (Facebook, Instagram, WhatsApp). |
+| sg, us, hk, jp | Blok IP publik berdasarkan negara (Singapura, AS, Hong Kong, Jepang, dll). |
 
 ---
 
-## 🛠️ Contoh Penggunaan Konfigurasi
-
-### 1. OpenClash / Mihomo (Clash Meta)
-Tambahkan ke dalam bagian **`rules:`** pada berkas `config.yaml` OpenClash Anda:
+## Contoh Penggunaan di OpenClash (config.yaml)
 
 ```yaml
 rules:
-  # 1. Sinkronisasi Waktu (NTP Wajib Direct)
-  - DST-PORT,123,DIRECT
+  # Aturan IP LAN / Jaringan Lokal
+  - GEOIP,private,DIRECT,no-resolve
 
-  # 2. Pemblokiran Iklan & Scam
+  # Aturan Geosite Buatan
   - GEOSITE,rule-ads,REJECT
-  - GEOSITE,ads-extra,REJECT
-
-  # 3. Bypass Perbankan & Ekosistem System (DIRECT)
   - GEOSITE,bank-id,DIRECT
   - GEOSITE,rule-eco,DIRECT
-  - GEOSITE,vidconference,DIRECT
+  - GEOSITE,sosmed,PROXIES
 
-  # 4. GEOIP Indonesia
+  # Aturan GeoIP Negara / Layanan
   - GEOIP,id,DIRECT
+  - GEOIP,telegram,PROXIES
 
-  # 5. Fallback Utama (VPN/Proxy Anda)
-  - MATCH,HK-VPN
-```
+  # Final Fallback
+  - MATCH,PROXIES# Custom V2Ray Rules Generator
 
-### 2. V2Ray / Xray (`config.json`)
+Repositori ini berisi berkas `geosite.dat` dan `geoip.dat` terkompilasi yang diperbarui secara otomatis setiap hari menggunakan GitHub Actions.
 
-```json
-"routing": {
-  "domainStrategy": "IPIfNonMatch",
-  "rules": [
-    {
-      "type": "field",
-      "outboundTag": "blocked",
-      "geosite": ["rule-ads", "ads-extra"]
-    },
-    {
-      "type": "field",
-      "outboundTag": "direct",
-      "geosite": ["bank-id", "rule-eco", "vidconference"]
-    }
-  ]
-}
-```
+## Sumber Data (Upstream)
+- Compiler Core: v2fly/domain-list-community
+- GeoIP Data: Loyalsoldier/v2ray-rules-dat
+- AdBlock & Trackers: Turtlecute33/adblocktest, OISD, AdGuard DNS Filter
+- AntiScam & Phishing: jarelllama/Scam-Blocklist, Discord-AntiScam/scam-links
+- Local & Custom Rules: jadahmambu/ocrule
 
 ---
 
-## 🔄 Pembaruan Otomatis
+## Tag GEOSITE (geosite.dat)
 
-Proyek ini berjalan secara otomatis melalui **GitHub Actions** setiap hari pada pukul **00:30 WIB (17:30 UTC)** untuk menyedot data *up-to-date* dari seluruh sumber utama, membuang duplikasi, serta memperbarui berkas di halaman **GitHub Releases**.
+Gunakan daftar tag ini untuk aturan berbasis domain (GEOSITE) di OpenClash / Mihomo:
+
+| Nama Tag | Deskripsi & Cakupan |
+| :--- | :--- |
+| rule-ads | Pemblokir iklan, pelacak (tracker), scam, dan phishing. |
+| ads-extra | Aturan iklan tambahan dan elemen pelacak sekunder. |
+| bank-id | Situs perbankan Indonesia (BCA, Mandiri, BRI, BNI, dll). |
+| rule-eco | Domain umum yang direkomendasikan masuk rute DIRECT (termasuk isi rule_direct.txt). |
+| rule-microsoft | Layanan dan server pembaruan Microsoft / Windows. |
+| sosmed | Media sosial (Facebook, Instagram, WhatsApp, TikTok, Twitter/X). |
+| streaming | Layanan streaming video & musik (YouTube, Netflix, Disney+, Spotify). |
+| vidconference | Platform rapat virtual (Zoom, Microsoft Teams, Google Meet). |
 
 ---
 
-## 🤝 Kredit Sumber Upstream
+## Tag GEOIP (geoip.dat)
 
-Terima kasih kepada proyek-proyek *open-source* yang menjadi fondasi kompilasi data ini:
+Gunakan daftar tag ini untuk aturan berbasis alamat IP (GEOIP) di OpenClash / Mihomo:
 
-* **Compiler Core:** [v2fly/domain-list-community](https://github.com/v2fly/domain-list-community)
-* **GeoIP Data:** [Loyalsoldier/v2ray-rules-dat](https://github.com/Loyalsoldier/v2ray-rules-dat)
-* **AdBlock & Trackers:** [Turtlecute33/adblocktest](https://github.com/Turtlecute33/adblocktest), [OISD](https://oisd.nl/), [AdGuard DNS Filter](https://github.com/AdguardTeam/AdGuardSDNSFilter)
-* **AntiScam & Phishing:** [jarelllama/Scam-Blocklist](https://github.com/jarelllama/Scam-Blocklist), [Discord-AntiScam/scam-links](https://github.com/Discord-AntiScam/scam-links)
-* **Local & Custom Rules:** [jadahmambu/ocrule](https://github.com/jadahmambu/ocrule)
+| Nama Tag | Deskripsi & Cakupan |
+| :--- | :--- |
+| private | IP Lokal/LAN (192.168.x.x, 10.x.x.x, 127.0.0.1, CGNAT 100.64.x.x). |
+| id | Seluruh alokasi blok IP publik penyedia internet di Indonesia (Indihome, Telkomsel, XL, Biznet, dll). |
+| telegram | Blok IP server pusat dan CDN aplikasi Telegram. |
+| netflix | Blok IP server infrastruktur streaming Netflix. |
+| google | Blok IP server dan layanan infrastruktur Google. |
+| facebook | Blok IP server Meta (Facebook, Instagram, WhatsApp). |
+| sg, us, hk, jp | Blok IP publik berdasarkan negara (Singapura, AS, Hong Kong, Jepang, dll). |
 
 ---
 
-## 📜 Lisensi
+## Contoh Penggunaan di OpenClash (config.yaml)
 
-Lisensi mengikuti aturan dari masing-masing penyedia sumber data *upstream* (MIT / GPL-3.0). Perangkat lunak ini bebas untuk digunakan, di-fork, dan disebarluaskan kembali.
+```yaml
+rules:
+  # Aturan IP LAN / Jaringan Lokal
+  - GEOIP,private,DIRECT,no-resolve
+
+  # Aturan Geosite Buatan
+  - GEOSITE,rule-ads,REJECT
+  - GEOSITE,bank-id,DIRECT
+  - GEOSITE,rule-eco,DIRECT
+  - GEOSITE,sosmed,PROXIES
+
+  # Aturan GeoIP Negara / Layanan
+  - GEOIP,id,DIRECT
+  - GEOIP,telegram,PROXIES
+
+  # Final Fallback
+  - MATCH,PROXIES# Custom V2Ray Rules Generator
+
+Repositori ini berisi berkas `geosite.dat` dan `geoip.dat` terkompilasi yang diperbarui secara otomatis setiap hari menggunakan GitHub Actions.
+
+## Sumber Data (Upstream)
+- Compiler Core: v2fly/domain-list-community
+- GeoIP Data: Loyalsoldier/v2ray-rules-dat
+- AdBlock & Trackers: Turtlecute33/adblocktest, OISD, AdGuard DNS Filter
+- AntiScam & Phishing: jarelllama/Scam-Blocklist, Discord-AntiScam/scam-links
+- Local & Custom Rules: jadahmambu/ocrule
+
+---
+
+## Tag GEOSITE (geosite.dat)
+
+Gunakan daftar tag ini untuk aturan berbasis domain (GEOSITE) di OpenClash / Mihomo:
+
+| Nama Tag | Deskripsi & Cakupan |
+| :--- | :--- |
+| rule-ads | Pemblokir iklan, pelacak (tracker), scam, dan phishing. |
+| ads-extra | Aturan iklan tambahan dan elemen pelacak sekunder. |
+| bank-id | Situs perbankan Indonesia (BCA, Mandiri, BRI, BNI, dll). |
+| rule-eco | Domain umum yang direkomendasikan masuk rute DIRECT (termasuk isi rule_direct.txt). |
+| rule-microsoft | Layanan dan server pembaruan Microsoft / Windows. |
+| sosmed | Media sosial (Facebook, Instagram, WhatsApp, TikTok, Twitter/X). |
+| streaming | Layanan streaming video & musik (YouTube, Netflix, Disney+, Spotify). |
+| vidconference | Platform rapat virtual (Zoom, Microsoft Teams, Google Meet). |
+
+---
+
+## Tag GEOIP (geoip.dat)
+
+Gunakan daftar tag ini untuk aturan berbasis alamat IP (GEOIP) di OpenClash / Mihomo:
+
+| Nama Tag | Deskripsi & Cakupan |
+| :--- | :--- |
+| private | IP Lokal/LAN (192.168.x.x, 10.x.x.x, 127.0.0.1, CGNAT 100.64.x.x). |
+| id | Seluruh alokasi blok IP publik penyedia internet di Indonesia (Indihome, Telkomsel, XL, Biznet, dll). |
+| telegram | Blok IP server pusat dan CDN aplikasi Telegram. |
+| netflix | Blok IP server infrastruktur streaming Netflix. |
+| google | Blok IP server dan layanan infrastruktur Google. |
+| facebook | Blok IP server Meta (Facebook, Instagram, WhatsApp). |
+| sg, us, hk, jp | Blok IP publik berdasarkan negara (Singapura, AS, Hong Kong, Jepang, dll). |
+
+---
+
+## Contoh Penggunaan di OpenClash (config.yaml)
+
+```yaml
+rules:
+  # Aturan IP LAN / Jaringan Lokal
+  - GEOIP,private,DIRECT,no-resolve
+
+  # Aturan Geosite Buatan
+  - GEOSITE,rule-ads,REJECT
+  - GEOSITE,bank-id,DIRECT
+  - GEOSITE,rule-eco,DIRECT
+  - GEOSITE,sosmed,PROXIES
+
+  # Aturan GeoIP Negara / Layanan
+  - GEOIP,id,DIRECT
+  - GEOIP,telegram,PROXIES
+
+  # Final Fallback
+  - MATCH,PROXIES
