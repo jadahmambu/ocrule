@@ -40,8 +40,9 @@ jobs:
           echo "ANTISCAM_JARELL=https://raw.githubusercontent.com/jarelllama/Scam-Blocklist/refs/heads/main/lists/wildcard_domains/scams.txt" >> $GITHUB_ENV
           echo "ANTISCAM_DISCORD=https://raw.githubusercontent.com/Discord-AntiScam/scam-links/refs/heads/main/list.txt" >> $GITHUB_ENV
           
-          echo "RULE_ADS_EXTENDED=https://raw.githubusercontent.com/malikshi/v2ray-rules-dat/rule/rule_ads.txt" >> $GITHUB_ENV
+          echo "RULE_ADS_D3HOST=https://raw.githubusercontent.com/Turtlecute33/adblocktest/master/src/d3host.txt" >> $GITHUB_ENV
           echo "RULE_ADS_JADAHMAMBU=https://raw.githubusercontent.com/jadahmambu/ocrule/main/adsblock.txt" >> $GITHUB_ENV
+          
           echo "RULE_BANK_ID=https://raw.githubusercontent.com/malikshi/v2ray-rules-dat/rule/rule_bank-id.txt" >> $GITHUB_ENV
           echo "RULE_BANK_JADAHMAMBU=https://raw.githubusercontent.com/jadahmambu/ocrule/main/rule_bank.txt" >> $GITHUB_ENV
           
@@ -65,14 +66,22 @@ jobs:
 
       - name: Create lists
         run: |
-          # 1. RULE-ADS (Malikshi + Adsblock Jadahmambu)
-          wget -qO ./community/data/rule-ads $RULE_ADS_EXTENDED || echo "full:ex.com" > ./community/data/rule-ads
+          # 1. RULE-ADS (Turtlecute33 D3Host + Adsblock Jadahmambu)
+          > ./community/data/rule-ads
+          wget -qO- $RULE_ADS_D3HOST | sed 's/\r//g' | awk '
+            !/^#/ && !/^!/ && NF {
+              gsub(/^[0-9\.]+[ \t]+/, "");
+              gsub(/^[a-zA-Z0-9_-]+:/, "");
+              if (length($0) > 0) print $0
+            }
+          ' >> ./community/data/rule-ads || true
+
           wget -qO- $RULE_ADS_JADAHMAMBU | sed 's/\r//g' | awk '
             !/^#/ && NF {
               gsub(/^[a-zA-Z0-9_-]+:/, "");
               if (length($0) > 0) print $0
             }
-          ' >> ./community/data/rule-ads
+          ' >> ./community/data/rule-ads || true
           
           # 2. BANK-ID (Malikshi + Jadahmambu + Fix Newline & Circular)
           > ./community/data/bank-id
