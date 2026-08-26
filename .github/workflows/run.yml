@@ -49,6 +49,7 @@ jobs:
           echo "ADGUARD_DNS=https://adguardteam.github.io/AdGuardSDNSFilter/Filters/filter.txt" >> $GITHUB_ENV
           
           echo "RULE_ECO=https://raw.githubusercontent.com/jadahmambu/ocrule/main/rule_eco.txt" >> $GITHUB_ENV
+          echo "RULE_DIRECT=https://raw.githubusercontent.com/jadahmambu/ocrule/main/rule_direct.txt" >> $GITHUB_ENV
           echo "RULE_MICROSOFT=https://raw.githubusercontent.com/jadahmambu/ocrule/main/rule_microsoft.txt" >> $GITHUB_ENV
           echo "RULE_SOSMED=https://raw.githubusercontent.com/jadahmambu/ocrule/main/rule_sosmed.txt" >> $GITHUB_ENV
           echo "RULE_STREAMING=https://raw.githubusercontent.com/jadahmambu/ocrule/main/rule_streaming.txt" >> $GITHUB_ENV
@@ -124,8 +125,13 @@ jobs:
             }
           ' >> ./community/data/ads-extra || true
 
-          # 4. RULE-ECO
-          wget -qO- $RULE_ECO | sed 's/\r//g' | awk '!/^#/ && NF { if (/^domain:/) print substr($0, 8); else print $0 }' > ./community/data/rule-eco
+          # 4. RULE-ECO + RULE-DIRECT
+          wget -qO- $RULE_ECO $RULE_DIRECT | sed 's/\r//g' | awk '
+            !/^#/ && NF { 
+              if (/^domain:/) print substr($0, 8); 
+              else print $0 
+            }
+          ' > ./community/data/rule-eco || true
 
           # 5. RULE-MICROSOFT
           wget -qO- $RULE_MICROSOFT | sed 's/\r//g' | awk '!/^#/ && NF { if (/^domain:/) print substr($0, 8); else print $0 }' > ./community/data/rule-microsoft
@@ -164,6 +170,15 @@ jobs:
           go install github.com/v2fly/domain-list-community@latest
           ~/go/bin/domain-list-community --datapath=./community/data
           mv ./dlc.dat ./publish/geosite.dat
+
+      - name: Validate Output Files
+        run: |
+          if [ ! -s ./publish/geosite.dat ] || [ ! -s ./publish/geoip.dat ]; then
+            echo "Error: Output dat files are empty!"
+            exit 1
+          fi
+          echo "Build validation passed. File sizes:"
+          ls -lh ./publish/
 
       - name: Deploy to GitHub Releases
         uses: softprops/action-gh-release@v3
