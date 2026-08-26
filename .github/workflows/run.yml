@@ -35,7 +35,9 @@ jobs:
           echo "RELEASE_NAME=Released on $(date +%Y%m%d%H%M)" >> $GITHUB_ENV
           echo "TAG_NAME=$(date +%Y%m%d%H%M)" >> $GITHUB_ENV
           
-          echo "ANTISCAM=https://raw.githubusercontent.com/malikshi/antiscam/refs/heads/main/antiscam.txt" >> $GITHUB_ENV
+          echo "ANTISCAM_JARELL=https://raw.githubusercontent.com/jarelllama/Scam-Blocklist/refs/heads/main/lists/wildcard_domains/scams.txt" >> $GITHUB_ENV
+          echo "ANTISCAM_DISCORD=https://raw.githubusercontent.com/Discord-AntiScam/scam-links/refs/heads/main/list.txt" >> $GITHUB_ENV
+          
           echo "RULE_ADS_EXTENDED=https://raw.githubusercontent.com/malikshi/v2ray-rules-dat/rule/rule_ads.txt" >> $GITHUB_ENV
           echo "RULE_ADS_JADAHMAMBU=https://raw.githubusercontent.com/jadahmambu/ocrule/main/adsblock.txt" >> $GITHUB_ENV
           echo "RULE_BANK_ID=https://raw.githubusercontent.com/malikshi/v2ray-rules-dat/rule/rule_bank-id.txt" >> $GITHUB_ENV
@@ -87,7 +89,7 @@ jobs:
             }
           ' >> ./community/data/bank-id
 
-          # 3. ADS-EXTRA (GABUNGAN: OISD FULL + AdGuard + Malikshi Antiscam)
+          # 3. ADS-EXTRA (GABUNGAN: OISD FULL + AdGuard + Direct Upstream AntiScam)
           > ./community/data/ads-extra
 
           # A. OISD FULL
@@ -105,9 +107,10 @@ jobs:
           ' >> ./community/data/ads-extra || true
           echo "" >> ./community/data/ads-extra
 
-          # C. Malikshi Antiscam (Fix Trailing Dots)
-          wget -qO- $ANTISCAM | sed 's/\r//g' | awk '
-            !/^#/ && NF {
+          # C. AntiScam Direct Sources (jarelllama & Discord-AntiScam)
+          wget -qO- $ANTISCAM_JARELL $ANTISCAM_DISCORD | sed 's/\r//g' | awk '
+            !/^#/ && !/^!/ && NF {
+              gsub(/^[ \t]*\*\./, "");
               gsub(/[^a-zA-Z0-9.-]/, "");
               gsub(/\.$/, "");
               if ($0 ~ /^[a-zA-Z0-9]([a-zA-Z0-9.-]*[a-zA-Z0-9])?\.[a-zA-Z]{2,}$/ && $0 !~ /\*/ && $0 !~ /\.\./) print $0
