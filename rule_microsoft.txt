@@ -10,3 +10,123 @@ domain:windows.net
 domain:aadrm.com
 keyword:microsoftonline
 keyword:microsoft
+# =====================================================
+# Microsoft & Windows Services (Format Geosite/Custom Rules)
+# =====================================================
+
+# --- KEYWORDS ---
+keyword:microsoft
+keyword:windows
+keyword:office
+keyword:azure
+keyword:xbox
+
+# --- FULL DOMAINS ---
+full:time.windows.com
+
+# --- DOMAINS & SUFFIXES ---
+domain:windowsupdate.com
+domain:download.windowsupdate.com
+domain:update.microsoft.com
+domain:fe2.ws.microsoft.com
+domain:fe2cr.update.microsoft.com
+domain:slscr.update.microsoft.com
+domain:tsfe.trafficshaping.dsp.mp.microsoft.com
+domain:wdcp.microsoft.com
+domain:ztd.dds.microsoft.com
+domain:dns.msftncsi.com
+domain:msftconnecttest.com
+domain:msftncsi.com
+domain:insideruser.microsoft.com
+domain:packages.microsoft.com
+domain:licensing.mp.microsoft.com
+domain:activation-v2.sls.microsoft.com
+domain:g.live.com
+
+# Edge Browser
+domain:edge.microsoft.com
+domain:microsoftedge.microsoft.com
+domain:microsoftedgewelcome.microsoft.com
+domain:edgefrecdn.azureedge.net
+domain:msedge.api.cdp.microsoft.com
+domain:ratingsedge.rnr.microsoft.com
+domain:msedge.b.tlu.dl.delivery.mp.microsoft.com
+domain:msedge.f.dl.delivery.mp.microsoft.com
+domain:msedge.f.tlu.dl.delivery.mp.microsoft.com
+domain:msedge.sf.dl.delivery.mp.microsoft.com
+
+# Office 365, Outlook & Auth
+domain:office.com
+domain:office.net
+domain:office365.com
+domain:officeapps.live.com
+domain:login.live.com
+domain:login.microsoftonline.com
+domain:account.activedirectory.windowsazure.com
+domain:acctcdn.msftauth.net
+domain:logincdn.msftauth.net
+domain:msftauth.net
+domain:aadcdn.msauth.net
+domain:fpt.live.com
+domain:client.hip.live.com
+domain:eus.client.hip.live.com
+domain:ncu.client.hip.live.com
+domain:scu.client.hip.live.com
+domain:wus.client.hip.live.com
+domain:msft.hsprotect.net
+domain:msagfx.live.com
+domain:client.prod.repmap.microsoft.com
+domain:identity.osi.office.net
+domain:dsm-efz.ms-acdc.office.com
+domain:mdw-efz.ms-acdc.office.com
+
+# OneDrive
+domain:storage.live.com
+domain:my.microsoftpersonalcontent.com
+domain:oneclient.sfx.ms
+domain:p.sfx.ms
+
+# Store, Assets & CDN
+domain:get.microsoft.com
+domain:displaycatalog.mp.microsoft.com
+domain:services.apps.microsoft.com
+domain:storeedgefd.dsx.mp.microsoft.com
+domain:storecatalogrevocation.storequality.microsoft.com
+domain:store-images.s-microsoft.com
+domain:wscont.apps.microsoft.com
+domain:wscont1.apps.microsoft.com
+domain:wscont2.apps.microsoft.com
+domain:next-services.apps.microsoft.com
+domain:cart.production.store-web.dynamics.com
+domain:assets.onestore.ms
+domain:fs.microsoft.com
+domain:fs.microsoft.com.akadns.net
+domain:cdn-dynmedia-1.microsoft.com
+domain:edgestatic-ehf9gbe6gfdfdec4.z01.azurefd.net
+domain:res-h3.public.cdn.office.net
+domain:res.public.onecdn.static.microsoft
+domain:shell.cdn.office.net
+domain:compass-ssl.microsoft.com
+domain:assets.account.microsoft.com
+domain:mem.gfx.ms
+domain:i1.social.s-msft.com
+
+# Teams, Bing & MSN
+domain:statics.teams.cdn.office.net
+domain:th.bing.com
+domain:assets.msn.com
+domain:img-s-msn-com.akamaized.net
+domain:zone.msn.com
+
+# Xbox & Gaming
+domain:device.auth.xboxlive.com
+domain:user.auth.xboxlive.com
+domain:xsts.auth.xboxlive.com
+domain:title.auth.xboxlive.com
+domain:userpresence.xboxlive.com
+domain:xblmessaging.xboxlive.com
+domain:peoplehub.xboxlive.com
+domain:title.mgt.xboxlive.com
+domain:rta.xboxlive.com
+domain:emerald.xboxservices.com
+domain:ee38.playfabapi.com
