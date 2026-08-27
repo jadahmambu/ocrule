@@ -31,3 +31,6 @@ domain:sdkconfig.ad.intl.xiaomi.com
 domain:api.ad.xiaomi.com
 domain:sdkconfig.ad.xiaomi.com
 domain:luckyorange.com
+full:ilockcardf.realme.com
+full:ire-dsu.shalltry.com
+full:static.ahagamecenter.com
