@@ -184,7 +184,7 @@ jobs:
           files: |
             ./publish/geoip.dat
             ./publish/geosite.dat
-          overwrite: true
+          overwrite_files: true
           make_latest: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
