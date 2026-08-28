@@ -3,4 +3,4 @@ domain:heytapmobi.com
 domain:heytapmobile.com
 domain:coloros.com
 domain:avcdn.net
-
+full:ublockorigin.github.io
