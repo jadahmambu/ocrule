@@ -35,6 +35,7 @@ full:ilockcardf.realme.com
 full:ire-dsu.shalltry.com
 full:static.ahagamecenter.com
 domain:shalltry.com
+domain:hisavana.com
 
 # === Turtlecute Host List ===
 
