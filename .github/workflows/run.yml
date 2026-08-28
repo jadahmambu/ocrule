@@ -5,6 +5,7 @@ on:
   push:
     branches:
       - master
+      - main
     paths-ignore:
       - "**/README.md"
   schedule:
@@ -18,14 +19,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v5
-        with:
-          submodules: false
+        uses: actions/checkout@v4
 
       - name: Setup Go
-        uses: actions/setup-go@v6
+        uses: actions/setup-go@v5
         with:
-          go-version: '1.25.12'
+          go-version: '1.22'
 
       - name: Set timezone to WIB Jakarta
         run: |
@@ -34,8 +33,8 @@ jobs:
 
       - name: Set variables
         run: |
-          echo "RELEASE_NAME=Released on $(date +%Y%m%d%H%M)" >> $GITHUB_ENV
-          echo "TAG_NAME=$(date +%Y%m%d%H%M)" >> $GITHUB_ENV
+          echo "RELEASE_NAME=Released on $(date +'%Y-%m-%d %H:%M WIB')" >> $GITHUB_ENV
+          echo "TAG_NAME=latest" >> $GITHUB_ENV
           
           echo "ANTISCAM_JARELL=https://raw.githubusercontent.com/jarelllama/Scam-Blocklist/refs/heads/main/lists/wildcard_domains/scams.txt" >> $GITHUB_ENV
           echo "ANTISCAM_DISCORD=https://raw.githubusercontent.com/Discord-AntiScam/scam-links/refs/heads/main/list.txt" >> $GITHUB_ENV
@@ -97,14 +96,11 @@ jobs:
             }
           ' >> ./community/data/bank-id || true
 
-          # 3. ADS-EXTRA (GABUNGAN: OISD FULL + AdGuard + Direct Upstream AntiScam)
+          # 3. ADS-EXTRA (OISD FULL + AdGuard + AntiScam)
           > ./community/data/ads-extra
-
-          # A. OISD FULL
           curl -fsSL $OISD_FULL | perl -ne '/^server=\/([^\/]+)\// && print "$1\n"' >> ./community/data/ads-extra || true
           echo "" >> ./community/data/ads-extra
 
-          # B. AdGuard DNS Filter
           wget -qO- $ADGUARD_DNS | sed 's/\r//g' | awk '
             !/^!/ && !/^#/ && NF {
               gsub(/^@@\|\|/, "");
@@ -115,7 +111,6 @@ jobs:
           ' >> ./community/data/ads-extra || true
           echo "" >> ./community/data/ads-extra
 
-          # C. AntiScam Direct Sources (jarelllama & Discord-AntiScam)
           wget -qO- $ANTISCAM_JARELL $ANTISCAM_DISCORD | sed 's/\r//g' | awk '
             !/^#/ && !/^!/ && NF {
               gsub(/^[ \t]*\*\./, "");
@@ -134,18 +129,18 @@ jobs:
           ' > ./community/data/rule-eco || true
 
           # 5. RULE-MICROSOFT
-          wget -qO- $RULE_MICROSOFT | sed 's/\r//g' | awk '!/^#/ && NF { if (/^domain:/) print substr($0, 8); else print $0 }' > ./community/data/rule-microsoft
+          wget -qO- $RULE_MICROSOFT | sed 's/\r//g' | awk '!/^#/ && NF { if (/^domain:/) print substr($0, 8); else print $0 }' > ./community/data/rule-microsoft || true
 
           # 6. RULE-SOSMED
-          wget -qO- $RULE_SOSMED | sed 's/\r//g' | awk '!/^#/ && NF { if (/^domain:/) print substr($0, 8); else print $0 }' > ./community/data/sosmed
+          wget -qO- $RULE_SOSMED | sed 's/\r//g' | awk '!/^#/ && NF { if (/^domain:/) print substr($0, 8); else print $0 }' > ./community/data/sosmed || true
 
           # 7. RULE-STREAMING
-          wget -qO- $RULE_STREAMING | sed 's/\r//g' | awk '!/^#/ && NF { if (/^domain:/) print substr($0, 8); else print $0 }' > ./community/data/streaming
+          wget -qO- $RULE_STREAMING | sed 's/\r//g' | awk '!/^#/ && NF { if (/^domain:/) print substr($0, 8); else print $0 }' > ./community/data/streaming || true
 
           # 8. RULE-VIDCONFERENCE
-          wget -qO- $RULE_VIDCONFERENCE | sed 's/\r//g' | awk '!/^#/ && NF { if (/^domain:/) print substr($0, 8); else print $0 }' > ./community/data/vidconference
+          wget -qO- $RULE_VIDCONFERENCE | sed 's/\r//g' | awk '!/^#/ && NF { if (/^domain:/) print substr($0, 8); else print $0 }' > ./community/data/vidconference || true
 
-          # SYARAT COMPILER: Dummy rules
+          # Dummy rules wajib untuk compiler v2fly
           echo "full:example-direct.com" > ./community/data/cn
           echo "full:example-proxy.com" > ./community/data/geolocation-cn
 
@@ -158,7 +153,6 @@ jobs:
             fi
           done
           
-          # Hapus seluruh baris duplikat secara efisien
           for f in ./community/data/*; do
             if [ -f "$f" ]; then
               sort -u "$f" -o "$f"
@@ -181,17 +175,16 @@ jobs:
           ls -lh ./publish/
 
       - name: Deploy to GitHub Releases
-        uses: softprops/action-gh-release@v3
+        uses: softprops/action-gh-release@v2
         with:
-          name: latest
-          tag_name: latest
+          name: ${{ env.RELEASE_NAME }}
+          tag_name: ${{ env.TAG_NAME }}
           draft: false
           prerelease: false
           files: |
             ./publish/geoip.dat
             ./publish/geosite.dat
-          overwrite_files: true
+          overwrite: true
           make_latest: true
-          fail_on_unmatched_files: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
