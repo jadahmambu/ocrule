@@ -34,3 +34,114 @@ domain:luckyorange.com
 full:ilockcardf.realme.com
 full:ire-dsu.shalltry.com
 full:static.ahagamecenter.com
+
+# === Turtlecute Host List ===
+
+# Amazon
+full:adtago.s3.amazonaws.com
+full:analyticsengine.s3.amazonaws.com
+full:analytics.s3.amazonaws.com
+full:advice-ads.s3.amazonaws.com
+
+# Google Ads & Analytics
+full:pagead2.googlesyndication.com
+full:adservice.google.com
+full:pagead2.googleadservices.com
+full:afs.googlesyndication.com
+full:analytics.google.com
+full:click.googleanalytics.com
+domain:google-analytics.com
+
+# Doubleclick
+domain:doubleclick.net
+
+# Adcolony
+domain:adcolony.com
+
+# Media.net
+domain:media.net
+
+# Hotjar
+domain:hotjar.com
+domain:hotjar.io
+
+# MouseFlow
+domain:mouseflow.com
+
+# FreshWorks
+domain:freshmarketer.com
+
+# Luckyorange
+domain:luckyorange.com
+domain:luckyorange.net
+
+# WP Stats
+full:stats.wp.com
+
+# Error Trackers (Bugsnag & Sentry)
+domain:bugsnag.com
+full:browser.sentry-cdn.com
+full:app.getsentry.com
+
+# Social Trackers
+full:pixel.facebook.com
+full:an.facebook.com
+full:static.ads-twitter.com
+full:ads-api.twitter.com
+full:ads.linkedin.com
+full:analytics.pointdrive.linkedin.com
+full:ads.pinterest.com
+full:log.pinterest.com
+full:trk.pinterest.com
+full:events.reddit.com
+full:events.redditmedia.com
+full:ads.youtube.com
+full:ads-api.tiktok.com
+full:analytics.tiktok.com
+full:ads-sg.tiktok.com
+full:analytics-sg.tiktok.com
+full:business-api.tiktok.com
+full:ads.tiktok.com
+full:log.byteoversea.com
+
+# Yahoo & Yandex
+domain:yahoo.com
+full:adtech.yahooinc.com
+full:extmaps-api.yandex.net
+full:appmetrica.yandex.ru
+full:adfstat.yandex.ru
+full:metrika.yandex.ru
+full:offerwall.yandex.net
+full:adfox.yandex.ru
+
+# Unity Ads
+domain:unityads.unity3d.com
+
+# OEMs (Realme, Xiaomi, Oppo, Huawei, OnePlus, Samsung, Apple)
+domain:realmemobile.com
+full:iot-eu-logser.realme.com
+full:iot-logser.realme.com
+full:api.ad.xiaomi.com
+domain:mistat.xiaomi.com
+full:data.mistat.india.xiaomi.com
+full:data.mistat.rus.xiaomi.com
+full:sdkconfig.ad.xiaomi.com
+full:sdkconfig.ad.intl.xiaomi.com
+full:tracking.rus.miui.com
+domain:ads.oppomobile.com
+full:adsfs.oppomobile.com
+domain:hicloud.com
+full:click.oneplus.cn
+full:open.oneplus.net
+domain:samsungads.com
+full:smetrics.samsung.com
+full:nmetrics.samsung.com
+full:samsung-com.112.2o7.net
+full:analytics-api.samsunghealthcn.com
+full:iadsdk.apple.com
+full:metrics.icloud.com
+full:metrics.mzstatic.com
+full:api-adservices.apple.com
+full:books-analytics-events.apple.com
+full:weather-analytics-events.apple.com
+full:notes-analytics-events.apple.com
