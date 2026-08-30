@@ -5,3 +5,4 @@ domain:coloros.com
 domain:avcdn.net
 full:ublockorigin.github.io
 domain:githubcopilot.com
+domain:jsdelivr.net
