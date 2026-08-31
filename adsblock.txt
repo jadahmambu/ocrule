@@ -1,3 +1,5 @@
+domain:googlesyndication.com
+domain:googleadservices.com
 domain:urioy.com
 full:androidapp.baidu.com
 domain:missav.ws
