@@ -36,18 +36,16 @@ jobs:
           echo "RELEASE_NAME=Released on $(date +'%Y-%m-%d %H:%M WIB')" >> $GITHUB_ENV
           echo "TAG_NAME=latest" >> $GITHUB_ENV
           
+          # Sumber Blokir Utama (AdGuard, Adult, Scam, Ads)
+          echo "ADGUARD_DNS=https://adguardteam.github.io/AdGuardSDNSFilter/Filters/filter.txt" >> $GITHUB_ENV
+          echo "STEVENBLACK_PORN=https://raw.githubusercontent.com/StevenBlack/hosts/master/alternates/porn-only/hosts" >> $GITHUB_ENV
           echo "ANTISCAM_JARELL=https://raw.githubusercontent.com/jarelllama/Scam-Blocklist/refs/heads/main/lists/wildcard_domains/scams.txt" >> $GITHUB_ENV
           echo "ANTISCAM_DISCORD=https://raw.githubusercontent.com/Discord-AntiScam/scam-links/refs/heads/main/list.txt" >> $GITHUB_ENV
-          
           echo "RULE_ADS_D3HOST=https://raw.githubusercontent.com/Turtlecute33/adblocktest/master/src/d3host.txt" >> $GITHUB_ENV
           echo "RULE_ADS_JADAHMAMBU=https://raw.githubusercontent.com/jadahmambu/ocrule/main/adsblock.txt" >> $GITHUB_ENV
           
+          # Sumber Rule Lainnya
           echo "RULE_BANK_JADAHMAMBU=https://raw.githubusercontent.com/jadahmambu/ocrule/main/rule_bank.txt" >> $GITHUB_ENV
-          
-          # Sumber Baru: AdGuard DNS Filter & StevenBlack Porn Only
-          echo "ADGUARD_DNS=https://adguardteam.github.io/AdGuardSDNSFilter/Filters/filter.txt" >> $GITHUB_ENV
-          echo "STEVENBLACK_PORN=https://raw.githubusercontent.com/StevenBlack/hosts/master/alternates/porn-only/hosts" >> $GITHUB_ENV
-          
           echo "RULE_ECO=https://raw.githubusercontent.com/jadahmambu/ocrule/main/rule_eco.txt" >> $GITHUB_ENV
           echo "RULE_DIRECT=https://raw.githubusercontent.com/jadahmambu/ocrule/main/rule_direct.txt" >> $GITHUB_ENV
           echo "RULE_MICROSOFT=https://raw.githubusercontent.com/jadahmambu/ocrule/main/rule_microsoft.txt" >> $GITHUB_ENV
@@ -66,7 +64,7 @@ jobs:
 
       - name: Create lists
         run: |
-          # 1. RULE-ADS (AdGuard DNS + Turtlecute33 + StevenBlack Porn + Adsblock Jadahmambu)
+          # 1. RULE-ADS (Penggabungan AdGuard, StevenBlack, AntiScam, D3Host, & Adsblock Lokal)
           > ./community/data/rule-ads
 
           # Ambil AdGuard DNS Filter
@@ -84,6 +82,16 @@ jobs:
             !/^#/ && !/^!/ && NF {
               gsub(/^[0-9\.]+[ \t]+/, "");
               if ($0 ~ /^[a-zA-Z0-9]([a-zA-Z0-9.-]*[a-zA-Z0-9])?\.[a-zA-Z]{2,}$/ && $0 !~ /localhost/) print $0
+            }
+          ' >> ./community/data/rule-ads || true
+
+          # Ambil AntiScam (Jarell & Discord)
+          wget -qO- $ANTISCAM_JARELL $ANTISCAM_DISCORD | sed 's/\r//g' | awk '
+            !/^#/ && !/^!/ && NF {
+              gsub(/^[ \t]*\*\./, "");
+              gsub(/[^a-zA-Z0-9.-]/, "");
+              gsub(/\.$/, "");
+              if ($0 ~ /^[a-zA-Z0-9]([a-zA-Z0-9.-]*[a-zA-Z0-9])?\.[a-zA-Z]{2,}$/ && $0 !~ /\*/ && $0 !~ /\.\./) print $0
             }
           ' >> ./community/data/rule-ads || true
 
@@ -118,18 +126,7 @@ jobs:
             }
           ' >> ./community/data/bank-id || true
 
-          # 3. ADS-EXTRA (AntiScam Only - Sangat Ringan)
-          > ./community/data/ads-extra
-          wget -qO- $ANTISCAM_JARELL $ANTISCAM_DISCORD | sed 's/\r//g' | awk '
-            !/^#/ && !/^!/ && NF {
-              gsub(/^[ \t]*\*\./, "");
-              gsub(/[^a-zA-Z0-9.-]/, "");
-              gsub(/\.$/, "");
-              if ($0 ~ /^[a-zA-Z0-9]([a-zA-Z0-9.-]*[a-zA-Z0-9])?\.[a-zA-Z]{2,}$/ && $0 !~ /\*/ && $0 !~ /\.\./) print $0
-            }
-          ' >> ./community/data/ads-extra || true
-
-          # 4. RULE-ECO + RULE-DIRECT
+          # 3. RULE-ECO + RULE-DIRECT
           wget -qO- $RULE_ECO $RULE_DIRECT | sed 's/\r//g' | awk '
             !/^#/ && NF { 
               if (/^domain:/) print substr($0, 8); 
@@ -137,16 +134,16 @@ jobs:
             }
           ' > ./community/data/rule-eco || true
 
-          # 5. RULE-MICROSOFT
+          # 4. RULE-MICROSOFT
           wget -qO- $RULE_MICROSOFT | sed 's/\r//g' | awk '!/^#/ && NF { if (/^domain:/) print substr($0, 8); else print $0 }' > ./community/data/rule-microsoft || true
 
-          # 6. RULE-SOSMED
+          # 5. RULE-SOSMED
           wget -qO- $RULE_SOSMED | sed 's/\r//g' | awk '!/^#/ && NF { if (/^domain:/) print substr($0, 8); else print $0 }' > ./community/data/sosmed || true
 
-          # 7. RULE-STREAMING
+          # 6. RULE-STREAMING
           wget -qO- $RULE_STREAMING | sed 's/\r//g' | awk '!/^#/ && NF { if (/^domain:/) print substr($0, 8); else print $0 }' > ./community/data/streaming || true
 
-          # 8. RULE-VIDCONFERENCE
+          # 7. RULE-VIDCONFERENCE
           wget -qO- $RULE_VIDCONFERENCE | sed 's/\r//g' | awk '!/^#/ && NF { if (/^domain:/) print substr($0, 8); else print $0 }' > ./community/data/vidconference || true
 
           # Dummy rules wajib untuk compiler v2fly
@@ -162,6 +159,7 @@ jobs:
             fi
           done
           
+          # Hapus entri ganda di setiap berkas secara otomatis
           for f in ./community/data/*; do
             if [ -f "$f" ]; then
               sort -u "$f" -o "$f"
