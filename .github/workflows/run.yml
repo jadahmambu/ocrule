@@ -153,7 +153,7 @@ jobs:
       - name: Automated Dependency Patcher & Deduplication
         run: |
           grep -hroE 'include:[a-zA-Z0-9\.\-]+' ./community/data/ | awk -F: '{print tolower($2)}' | sort -u | while read -r list_name; do
-            if [ ! -f "./community/data/$list_name" ]; me
+            if [ ! -f "./community/data/$list_name" ]; then
               echo "Membuat berkas dummy aman untuk dependensi: $list_name"
               echo "full:example-fix-$list_name.com" > "./community/data/$list_name"
             fi
