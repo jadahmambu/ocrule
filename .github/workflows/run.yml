@@ -44,8 +44,9 @@ jobs:
           
           echo "RULE_BANK_JADAHMAMBU=https://raw.githubusercontent.com/jadahmambu/ocrule/main/rule_bank.txt" >> $GITHUB_ENV
           
-          echo "OISD_FULL=https://big.oisd.nl/dnsmasq" >> $GITHUB_ENV
+          # Sumber Baru: AdGuard DNS Filter & StevenBlack Porn Only
           echo "ADGUARD_DNS=https://adguardteam.github.io/AdGuardSDNSFilter/Filters/filter.txt" >> $GITHUB_ENV
+          echo "STEVENBLACK_PORN=https://raw.githubusercontent.com/StevenBlack/hosts/master/alternates/porn-only/hosts" >> $GITHUB_ENV
           
           echo "RULE_ECO=https://raw.githubusercontent.com/jadahmambu/ocrule/main/rule_eco.txt" >> $GITHUB_ENV
           echo "RULE_DIRECT=https://raw.githubusercontent.com/jadahmambu/ocrule/main/rule_direct.txt" >> $GITHUB_ENV
@@ -65,8 +66,28 @@ jobs:
 
       - name: Create lists
         run: |
-          # 1. RULE-ADS (Turtlecute33 D3Host + Adsblock Jadahmambu)
+          # 1. RULE-ADS (AdGuard DNS + Turtlecute33 + StevenBlack Porn + Adsblock Jadahmambu)
           > ./community/data/rule-ads
+
+          # Ambil AdGuard DNS Filter
+          wget -qO- $ADGUARD_DNS | sed 's/\r//g' | awk '
+            !/^!/ && !/^#/ && NF {
+              gsub(/^@@\|\|/, "");
+              gsub(/^\|\|/, "");
+              gsub(/\^.*$/, "");
+              if ($0 ~ /^[a-zA-Z0-9]([a-zA-Z0-9.-]*[a-zA-Z0-9])?\.[a-zA-Z]{2,}$/ && $0 !~ /\*/ && $0 !~ /\.\./) print $0
+            }
+          ' >> ./community/data/rule-ads || true
+
+          # Ambil StevenBlack Porn List (Situs Dewasa)
+          wget -qO- $STEVENBLACK_PORN | sed 's/\r//g' | awk '
+            !/^#/ && !/^!/ && NF {
+              gsub(/^[0-9\.]+[ \t]+/, "");
+              if ($0 ~ /^[a-zA-Z0-9]([a-zA-Z0-9.-]*[a-zA-Z0-9])?\.[a-zA-Z]{2,}$/ && $0 !~ /localhost/) print $0
+            }
+          ' >> ./community/data/rule-ads || true
+
+          # Ambil D3Host
           wget -qO- $RULE_ADS_D3HOST | sed 's/\r//g' | awk '
             !/^#/ && !/^!/ && NF {
               gsub(/^[0-9\.]+[ \t]+/, "");
@@ -75,6 +96,7 @@ jobs:
             }
           ' >> ./community/data/rule-ads || true
 
+          # Ambil Adsblock Lokal (Jadahmambu)
           wget -qO- $RULE_ADS_JADAHMAMBU | sed 's/\r//g' | awk '
             !/^#/ && NF {
               gsub(/^[a-zA-Z0-9_-]+:/, "");
@@ -96,21 +118,8 @@ jobs:
             }
           ' >> ./community/data/bank-id || true
 
-          # 3. ADS-EXTRA (OISD FULL + AdGuard + AntiScam)
+          # 3. ADS-EXTRA (AntiScam Only - Sangat Ringan)
           > ./community/data/ads-extra
-          curl -fsSL $OISD_FULL | perl -ne '/^server=\/([^\/]+)\// && print "$1\n"' >> ./community/data/ads-extra || true
-          echo "" >> ./community/data/ads-extra
-
-          wget -qO- $ADGUARD_DNS | sed 's/\r//g' | awk '
-            !/^!/ && !/^#/ && NF {
-              gsub(/^@@\|\|/, "");
-              gsub(/^\|\|/, "");
-              gsub(/\^.*$/, "");
-              if ($0 ~ /^[a-zA-Z0-9]([a-zA-Z0-9.-]*[a-zA-Z0-9])?\.[a-zA-Z]{2,}$/ && $0 !~ /\*/ && $0 !~ /\.\./) print $0
-            }
-          ' >> ./community/data/ads-extra || true
-          echo "" >> ./community/data/ads-extra
-
           wget -qO- $ANTISCAM_JARELL $ANTISCAM_DISCORD | sed 's/\r//g' | awk '
             !/^#/ && !/^!/ && NF {
               gsub(/^[ \t]*\*\./, "");
