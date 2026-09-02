@@ -58,9 +58,9 @@ jobs:
           rm -rf community publish
           mkdir -p community/data publish
 
-      - name: Get Lightweight geoip.dat (v2fly - Support GEOIP,facebook)
+      - name: Get Lightweight geoip.dat (MetaCubeX - Support GEOIP,facebook & ~4MB Size)
         run: |
-          wget -q https://github.com/v2fly/geoip/releases/latest/download/geoip.dat -O ./publish/geoip.dat || true
+          wget -q https://github.com/MetaCubeX/meta-rules-dat/releases/download/latest/geoip.dat -O ./publish/geoip.dat || true
 
       - name: Create lists
         run: |
