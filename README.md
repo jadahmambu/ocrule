@@ -74,3 +74,27 @@ rules:
 
   # Match Sisa Trafik
   - MATCH,HK-VPN
+```
+
+---
+
+## 📦 Unduh Rilis Berkas `.dat`
+
+Unduh berkas kompilasi terbaru secara langsung melalui tautan rilis repositori:
+
+- **`geosite.dat`** $
+ightarrow$ `https://github.com/jadahmambu/ocrule/releases/latest/download/geosite.dat`
+- **`geoip.dat`** $
+ightarrow$ `https://github.com/jadahmambu/ocrule/releases/latest/download/geoip.dat`
+
+---
+
+## 📄 Lisensi & Sumber Daya
+
+Proyek ini disusun dan mengompilasi data dari berbagai proyek *open-source*:
+- Compiler: [v2fly/domain-list-community](https://github.com/v2fly/domain-list-community)
+- GeoIP Source: [MetaCubeX/meta-rules-dat](https://github.com/MetaCubeX/meta-rules-dat)
+- OGAH / TrustPositif ID: [Big-Boss-A/OGAH](https://github.com/Big-Boss-A/OGAH)
+- AdGuard DNS: [AdGuard Filter](https://adguard.com/)
+- Adult Blocklist: [StevenBlack Hosts](https://github.com/StevenBlack/hosts)
+- D3Host: [Turtlecute33/adblocktest](https://github.com/Turtlecute33/adblocktest)
