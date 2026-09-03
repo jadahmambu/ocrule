@@ -36,11 +36,11 @@ jobs:
           echo "RELEASE_NAME=Released on $(date +'%Y-%m-%d %H:%M WIB')" >> $GITHUB_ENV
           echo "TAG_NAME=latest" >> $GITHUB_ENV
           
-          # Sumber Blokir Utama (AdGuard, Adult, Scam Light, Ads)
+          # Sumber Blokir Utama (AdGuard, Adult, AntiScam/Phishing/Judi Lokal Indonesia, Ads)
           echo "ADGUARD_DNS=https://adguardteam.github.io/AdGuardSDNSFilter/Filters/filter.txt" >> $GITHUB_ENV
           echo "STEVENBLACK_PORN=https://raw.githubusercontent.com/StevenBlack/hosts/master/alternates/porn-only/hosts" >> $GITHUB_ENV
-          echo "ANTISCAM_JARELL=https://raw.githubusercontent.com/jarelllama/Scam-Blocklist/main/lists/wildcard_domains/scams_light.txt" >> $GITHUB_ENV
-          echo "ANTISCAM_DISCORD=https://raw.githubusercontent.com/Discord-AntiScam/scam-links/refs/heads/main/list.txt" >> $GITHUB_ENV
+          echo "ANTISCAM_ID=https://raw.githubusercontent.com/v2ray/domain-list-community/master/data/category-ads-id" >> $GITHUB_ENV
+          echo "TRUSTPOSITIF_ID=https://raw.githubusercontent.com/herrbischoff/awesome-openwrt/master/trustpositif.txt" >> $GITHUB_ENV
           echo "RULE_ADS_D3HOST=https://raw.githubusercontent.com/Turtlecute33/adblocktest/master/src/d3host.txt" >> $GITHUB_ENV
           echo "RULE_ADS_JADAHMAMBU=https://raw.githubusercontent.com/jadahmambu/ocrule/main/adsblock.txt" >> $GITHUB_ENV
           
@@ -64,7 +64,7 @@ jobs:
 
       - name: Create lists
         run: |
-          # 1. RULE-ADS (Konsolidasi Total: AdGuard + StevenBlack Porn + AntiScam Light + D3Host + Adsblock Lokal)
+          # 1. RULE-ADS (Konsolidasi Total: AdGuard + StevenBlack Porn + AntiScam/Komdigi Lokal ID + D3Host + Adsblock Lokal)
           > ./community/data/rule-ads
 
           # Ambil AdGuard DNS Filter
@@ -85,8 +85,8 @@ jobs:
             }
           ' >> ./community/data/rule-ads || true
 
-          # Ambil AntiScam (Jarell Light & Discord)
-          wget -qO- $ANTISCAM_JARELL $ANTISCAM_DISCORD | sed 's/\r//g' | awk '
+          # Ambil AntiScam, Ads, & Domain Terlarang Murni Lokal Indonesia
+          wget -qO- $ANTISCAM_ID $TRUSTPOSITIF_ID | sed 's/\r//g' | awk '
             !/^#/ && !/^!/ && NF {
               gsub(/^[ \t]*\*\./, "");
               gsub(/[^a-zA-Z0-9.-]/, "");
