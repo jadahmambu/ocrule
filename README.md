@@ -1,13 +1,15 @@
 # Custom V2Ray Rules Dat Generator
 
-Pipa otomatisasi berbasis GitHub Actions untuk membuat berkas `geosite.dat` dan `geoip.dat` yang ringan, efisien, dan dikonsolidasikan khusus untuk **OpenClash / Mihomo Core** pada perangkat dengan spesifikasi atau memori terbatas (seperti STB OpenWrt).
+Pipa otomatisasi berbasis GitHub Actions untuk membuat berkas `geosite.dat` dan `geoip.dat` yang ringan, efisien, dan dikonsolidasikan khusus untuk **OpenClash / Mihomo Core** pada perangkat dengan spesifikasi atau memori terbatas (seperti STB OpenWrt B760H).
 
 ---
 
 ## 🚀 Fitur Utama
 
-- **`rule-ads` Terkonsolidasi Total:** Menggabungkan *AdGuard DNS Filter*, *StevenBlack Porn List*, *AntiScam (Jarell & Discord)*, *D3Host*, dan daftar blokir lokal ke dalam **satu tag tunggal**.
-- **Ringan & Hemat RAM:** Menggunakan sumber `geoip.dat` terkompresi dari **MetaCubeX** (~3.5–4 MB) untuk efisiensi tinggi pada router/STB.
+- **`rule-ads` Terkonsolidasi Total:** Menggabungkan *AdGuard DNS Filter*, *StevenBlack Porn List*, *OGAH / TrustPositif Komdigi ID*, *v2fly Category Ads ID*, *D3Host*, dan *adsblock.txt* lokal ke dalam **satu tag tunggal**.
+- **Dioptimalkan untuk Indonesia:** Menggunakan sumber penipuan, *phishing*, judi online, dan iklan lokal Indonesia aktif sebagai pengganti daftar *scam* global.
+- **Sangat Ringan & Hemat RAM (~5 MB):** Memangkas berkas dari ukuran umum (~17 MB) dengan membuang domain global yang tidak dipakai, menghemat hingga 50 MB penggunaan RAM pada STB.
+- **`geoip.dat` Ringan dari MetaCubeX (~3.5 MB):** Mendukung penuh tag `geoip:facebook`, `geoip:telegram`, `geoip:google`, `geoip:id`, dan `geoip:private`.
 - **Pembersihan Otomatis (*Automated Deduplication & Dependency Patching*):** Menghapus domain duplikat secara otomatis saat kompilasi dan menambal dependensi `include:` agar tidak pernah terjadi kegagalan *build*.
 - **Pembaruan Otomatis:** Berkas diperbarui secara otomatis setiap hari via GitHub Actions (*cron schedule*).
 
@@ -19,7 +21,7 @@ Pipa otomatisasi berbasis GitHub Actions untuk membuat berkas `geosite.dat` dan 
 
 | Tag Geosite | Sumber & Cakupan | Rekomendasi Action |
 | :--- | :--- | :--- |
-| **`rule-ads`** | AdGuard DNS + StevenBlack Porn + AntiScam + D3Host + `adsblock.txt` lokal | `REJECT` |
+| **`rule-ads`** | AdGuard DNS + StevenBlack Porn + OGAH/TrustPositif ID + Category Ads ID + D3Host + `adsblock.txt` lokal | `REJECT` |
 | **`bank-id`** | Domain perbankan & *financial* Indonesia (`rule_bank.txt`) | `Direct` / `DIRECT` |
 | **`rule-eco`** | Domain hemat/sistem (`rule_eco.txt` + `rule_direct.txt`) | `HK-VPN` / `DIRECT` |
 | **`rule-microsoft`** | Ekosistem & layanan Microsoft (`rule_microsoft.txt`) | `Direct` / `DIRECT` |
@@ -72,26 +74,3 @@ rules:
 
   # Match Sisa Trafik
   - MATCH,HK-VPN
-```
-
----
-
-## 📦 Unduh Rilis Berkas `.dat`
-
-Anda dapat mengunduh berkas kompilasi terbaru secara langsung melalui menu **Releases**:
-
-- **`geosite.dat`** $
-ightarrow$ `https://github.com/<username>/<repo>/releases/latest/download/geosite.dat`
-- **`geoip.dat`** $
-ightarrow$ `https://github.com/<username>/<repo>/releases/latest/download/geoip.dat`
-
----
-
-## 📄 Lisensi & Sumber Daya
-
-Proyek ini disusun dan mengompilasi data dari berbagai proyek *open-source*:
-- Compiler: [v2fly/domain-list-community](https://github.com/v2fly/domain-list-community)
-- GeoIP Source: [MetaCubeX/meta-rules-dat](https://github.com/MetaCubeX/meta-rules-dat)
-- AdGuard DNS: [AdGuard Filter](https://adguard.com/)
-- Adult Blocklist: [StevenBlack Hosts](https://github.com/StevenBlack/hosts)
-- Scam Lists: [Jarell Scam Blocklist](https://github.com/jarelllama/Scam-Blocklist) & [Discord AntiScam](https://github.com/Discord-AntiScam/scam-links)
