@@ -40,7 +40,7 @@ jobs:
           echo "ADGUARD_DNS=https://adguardteam.github.io/AdGuardSDNSFilter/Filters/filter.txt" >> $GITHUB_ENV
           echo "STEVENBLACK_PORN=https://raw.githubusercontent.com/StevenBlack/hosts/master/alternates/porn-only/hosts" >> $GITHUB_ENV
           echo "ANTISCAM_ID=https://raw.githubusercontent.com/v2ray/domain-list-community/master/data/category-ads-id" >> $GITHUB_ENV
-          echo "TRUSTPOSITIF_ID=https://raw.githubusercontent.com/herrbischoff/awesome-openwrt/master/trustpositif.txt" >> $GITHUB_ENV
+          echo "TRUSTPOSITIF_ID=https://raw.githubusercontent.com/Big-Boss-A/OGAH/refs/heads/main/hosts" >> $GITHUB_ENV
           echo "RULE_ADS_D3HOST=https://raw.githubusercontent.com/Turtlecute33/adblocktest/master/src/d3host.txt" >> $GITHUB_ENV
           echo "RULE_ADS_JADAHMAMBU=https://raw.githubusercontent.com/jadahmambu/ocrule/main/adsblock.txt" >> $GITHUB_ENV
           
@@ -88,10 +88,11 @@ jobs:
           # Ambil AntiScam, Ads, & Domain Terlarang Murni Lokal Indonesia
           wget -qO- $ANTISCAM_ID $TRUSTPOSITIF_ID | sed 's/\r//g' | awk '
             !/^#/ && !/^!/ && NF {
+              gsub(/^[0-9\.]+[ \t]+/, "");
               gsub(/^[ \t]*\*\./, "");
               gsub(/[^a-zA-Z0-9.-]/, "");
               gsub(/\.$/, "");
-              if ($0 ~ /^[a-zA-Z0-9]([a-zA-Z0-9.-]*[a-zA-Z0-9])?\.[a-zA-Z]{2,}$/ && $0 !~ /\*/ && $0 !~ /\.\./) print $0
+              if ($0 ~ /^[a-zA-Z0-9]([a-zA-Z0-9.-]*[a-zA-Z0-9])?\.[a-zA-Z]{2,}$/ && $0 !~ /\*/ && $0 !~ /\.\./ && $0 !~ /localhost/) print $0
             }
           ' >> ./community/data/rule-ads || true
 
