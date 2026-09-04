@@ -1,0 +1,216 @@
+name: Build V2Ray rules dat files
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - master
+      - main
+    paths-ignore:
+      - "**/README.md"
+  schedule:
+    - cron: '30 17 * * *'
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.22'
+
+      - name: Set timezone to WIB Jakarta
+        run: |
+          sudo ln -sf /usr/share/zoneinfo/Asia/Jakarta /etc/localtime
+          date
+
+      - name: Set variables
+        run: |
+          echo "RELEASE_NAME=Released on $(date +'%Y-%m-%d %H:%M WIB')" >> $GITHUB_ENV
+          echo "TAG_NAME=latest" >> $GITHUB_ENV
+          
+          # Sumber Blokir Utama (AdGuard, Adult, AntiScam Light, Discord, Ads)
+          echo "ADGUARD_DNS=https://adguardteam.github.io/AdGuardSDNSFilter/Filters/filter.txt" >> $GITHUB_ENV
+          echo "STEVENBLACK_PORN=https://raw.githubusercontent.com/StevenBlack/hosts/master/alternates/porn-only/hosts" >> $GITHUB_ENV
+          echo "ANTISCAM_JARELL=https://raw.githubusercontent.com/jarelllama/Scam-Blocklist/main/lists/wildcard_domains/scams_light.txt" >> $GITHUB_ENV
+          echo "ANTISCAM_DISCORD=https://raw.githubusercontent.com/Discord-AntiScam/scam-links/refs/heads/main/list.txt" >> $GITHUB_ENV
+          echo "RULE_ADS_D3HOST=https://raw.githubusercontent.com/Turtlecute33/adblocktest/master/src/d3host.txt" >> $GITHUB_ENV
+          echo "RULE_ADS_JADAHMAMBU=https://raw.githubusercontent.com/jadahmambu/ocrule/main/adsblock.txt" >> $GITHUB_ENV
+          
+          # Sumber Rule Lainnya
+          echo "RULE_BANK_JADAHMAMBU=https://raw.githubusercontent.com/jadahmambu/ocrule/main/rule_bank.txt" >> $GITHUB_ENV
+          echo "RULE_ECO=https://raw.githubusercontent.com/jadahmambu/ocrule/main/rule_eco.txt" >> $GITHUB_ENV
+          echo "RULE_DIRECT=https://raw.githubusercontent.com/jadahmambu/ocrule/main/rule_direct.txt" >> $GITHUB_ENV
+          echo "RULE_MICROSOFT=https://raw.githubusercontent.com/jadahmambu/ocrule/main/rule_microsoft.txt" >> $GITHUB_ENV
+          echo "RULE_SOSMED=https://raw.githubusercontent.com/jadahmambu/ocrule/main/rule_sosmed.txt" >> $GITHUB_ENV
+          echo "RULE_STREAMING=https://raw.githubusercontent.com/jadahmambu/ocrule/main/rule_streaming.txt" >> $GITHUB_ENV
+          echo "RULE_VIDCONFERENCE=https://raw.githubusercontent.com/jadahmambu/ocrule/main/rule_videoconference.txt" >> $GITHUB_ENV
+
+      - name: Prepare Data Directory
+        run: |
+          rm -rf community publish
+          mkdir -p community/data publish
+
+      # -------------------------------------------------------------
+      # STEP BUILD GEOIP DARI FOLDER 'geoip' LOKAL DI REPOSITORI
+      # -------------------------------------------------------------
+      - name: Build Custom GeoIP from Local Text Files
+        run: |
+          # 1. Pastikan folder ./geoip ada di repositori
+          if [ ! -d "./geoip" ]; then
+            echo "Error: Folder ./geoip tidak ditemukan di repositori!"
+            exit 1
+          fi
+
+          # 2. Buat config.json untuk generator v2fly
+          cat << 'EOF' > ./geoip/config.json
+          {
+            "input": [
+              {
+                "type": "plaintext",
+                "action": "add",
+                "args": {
+                  "basedir": "./geoip"
+                }
+              }
+            ],
+            "output": [
+              {
+                "type": "v2raygeoipdat",
+                "action": "output",
+                "args": {
+                  "outputName": "geoip.dat",
+                  "outputDir": "./publish"
+                }
+              }
+            ]
+          }
+EOF
+
+          # 3. Kompilasi file teks dari folder geoip menjadi geoip.dat
+          go install github.com/v2fly/geoip@latest
+          $(go env GOPATH)/bin/geoip convert -c ./geoip/config.json
+
+      # -------------------------------------------------------------
+      # STEP BUILD GEOSITE
+      # -------------------------------------------------------------
+      - name: Create Geosite Lists
+        run: |
+          # 1. RULE-ADS
+          > ./community/data/rule-ads
+
+          wget -qO- $ADGUARD_DNS | sed 's/\r//g' | awk '
+            !/^!/ && !/^#/ && NF {
+              gsub(/^@@\|\|/, "");
+              gsub(/^\|\|/, "");
+              gsub(/\^.*$/, "");
+              if ($0 ~ /^[a-zA-Z0-9]([a-zA-Z0-9.-]*[a-zA-Z0-9])?\.[a-zA-Z]{2,}$/ && $0 !~ /\*/ && $0 !~ /\.\./) print $0
+            }
+          ' >> ./community/data/rule-ads || true
+
+          wget -qO- $STEVENBLACK_PORN | sed 's/\r//g' | awk '
+            !/^#/ && !/^!/ && NF {
+              gsub(/^[0-9\.]+[ \t]+/, "");
+              if ($0 ~ /^[a-zA-Z0-9]([a-zA-Z0-9.-]*[a-zA-Z0-9])?\.[a-zA-Z]{2,}$/ && $0 !~ /localhost/) print $0
+            }
+          ' >> ./community/data/rule-ads || true
+
+          wget -qO- $ANTISCAM_JARELL $ANTISCAM_DISCORD | sed 's/\r//g' | awk '
+            !/^#/ && !/^!/ && NF {
+              gsub(/^[ \t]*\*\./, "");
+              gsub(/[^a-zA-Z0-9.-]/, "");
+              gsub(/\.$/, "");
+              if ($0 ~ /^[a-zA-Z0-9]([a-zA-Z0-9.-]*[a-zA-Z0-9])?\.[a-zA-Z]{2,}$/ && $0 !~ /\*/ && $0 !~ /\.\./) print $0
+            }
+          ' >> ./community/data/rule-ads || true
+
+          wget -qO- $RULE_ADS_D3HOST | sed 's/\r//g' | awk '
+            !/^#/ && !/^!/ && NF {
+              gsub(/^[0-9\.]+[ \t]+/, "");
+              gsub(/^[a-zA-Z0-9_-]+:/, "");
+              if (length($0) > 0) print $0
+            }
+          ' >> ./community/data/rule-ads || true
+
+          wget -qO- $RULE_ADS_JADAHMAMBU | sed 's/\r//g' | awk '
+            !/^#/ && NF {
+              gsub(/^[a-zA-Z0-9_-]+:/, "");
+              if (length($0) > 0) print $0
+            }
+          ' >> ./community/data/rule-ads || true
+          
+          # 2. BANK-ID
+          > ./community/data/bank-id
+          wget -qO- $RULE_BANK_JADAHMAMBU | sed 's/\r//g' | awk '
+            !/^#/ && !/include:bank-id/ && NF {
+              gsub(/^[ \t]*-?[ \t]*/, "");
+              if (/^DST-PORT/ || /^IP-CIDR/) next;
+              if (/^DOMAIN-KEYWORD,/) { print "keyword:" substr($0, 16); }
+              else if (/^DOMAIN-SUFFIX,/) { print substr($0, 15); }
+              else if (/^DOMAIN,/) { print "full:" substr($0, 8); }
+              else if (/^domain:/) { print substr($0, 8); }
+              else { print $0; }
+            }
+          ' >> ./community/data/bank-id || true
+
+          # 3-7. RULE LAINNYA
+          wget -qO- $RULE_ECO $RULE_DIRECT | sed 's/\r//g' | awk '!/^#/ && NF { if (/^domain:/) print substr($0, 8); else print $0 }' > ./community/data/rule-eco || true
+          wget -qO- $RULE_MICROSOFT | sed 's/\r//g' | awk '!/^#/ && NF { if (/^domain:/) print substr($0, 8); else print $0 }' > ./community/data/rule-microsoft || true
+          wget -qO- $RULE_SOSMED | sed 's/\r//g' | awk '!/^#/ && NF { if (/^domain:/) print substr($0, 8); else print $0 }' > ./community/data/sosmed || true
+          wget -qO- $RULE_STREAMING | sed 's/\r//g' | awk '!/^#/ && NF { if (/^domain:/) print substr($0, 8); else print $0 }' > ./community/data/streaming || true
+          wget -qO- $RULE_VIDCONFERENCE | sed 's/\r//g' | awk '!/^#/ && NF { if (/^domain:/) print substr($0, 8); else print $0 }' > ./community/data/vidconference || true
+
+          # Dummy rules wajib
+          echo "full:example-direct.com" > ./community/data/cn
+          echo "full:example-proxy.com" > ./community/data/geolocation-cn
+
+      - name: Automated Dependency Patcher & Deduplication
+        run: |
+          grep -hroE 'include:[a-zA-Z0-9\.\-]+' ./community/data/ | awk -F: '{print tolower($2)}' | sort -u | while read -r list_name; do
+            if [ ! -f "./community/data/$list_name" ]; then
+              echo "full:example-fix-$list_name.com" > "./community/data/$list_name"
+            fi
+          done
+          
+          for f in ./community/data/*; do
+            if [ -f "$f" ]; then
+              sort -u "$f" -o "$f"
+            fi
+          done
+
+      - name: Build geosite.dat using Go Install
+        run: |
+          go install github.com/v2fly/domain-list-community@latest
+          $(go env GOPATH)/bin/domain-list-community --datapath=./community/data
+          mv ./dlc.dat ./publish/geosite.dat
+
+      - name: Validate Output Files
+        run: |
+          if [ ! -s ./publish/geosite.dat ] || [ ! -s ./publish/geoip.dat ]; then
+            echo "Error: Output dat files are empty!"
+            exit 1
+          fi
+          echo "Build validation passed. File sizes:"
+          ls -lh ./publish/
+
+      - name: Deploy to GitHub Releases
+        uses: softprops/action-gh-release@v2
+        with:
+          name: ${{ env.RELEASE_NAME }}
+          tag_name: ${{ env.TAG_NAME }}
+          draft: false
+          prerelease: false
+          files: |
+            ./publish/geoip.dat
+            ./publish/geosite.dat
+          overwrite_files: true
+          make_latest: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
