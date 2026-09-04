@@ -75,8 +75,10 @@ jobs:
           chmod +x ./geo_bin
           mkdir -p ./publish
 
-          # 4. Konversi teks dari ./geoip menjadi ./publish/geoip.dat
-          ./geo_bin convert ip -i text -o v2ray --dir-input ./geoip --dir-output ./publish -f geoip.dat
+          # 4. Pindah ke direktori ./geoip dan jalankan konversi
+          cd ./geoip
+          ../geo_bin convert ip -i text -o v2ray -f ../publish/geoip.dat
+          cd ..
 
       # -------------------------------------------------------------
       # STEP BUILD GEOSITE
