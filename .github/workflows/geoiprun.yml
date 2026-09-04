@@ -36,7 +36,7 @@ jobs:
           echo "RELEASE_NAME=Released on $(date +'%Y-%m-%d %H:%M WIB')" >> $GITHUB_ENV
           echo "TAG_NAME=latest" >> $GITHUB_ENV
           
-          # Sumber Blokir Utama (AdGuard, Adult, AntiScam Light, Discord, Ads)
+          # Sumber Blokir Utama
           echo "ADGUARD_DNS=https://adguardteam.github.io/AdGuardSDNSFilter/Filters/filter.txt" >> $GITHUB_ENV
           echo "STEVENBLACK_PORN=https://raw.githubusercontent.com/StevenBlack/hosts/master/alternates/porn-only/hosts" >> $GITHUB_ENV
           echo "ANTISCAM_JARELL=https://raw.githubusercontent.com/jarelllama/Scam-Blocklist/main/lists/wildcard_domains/scams_light.txt" >> $GITHUB_ENV
@@ -55,18 +55,41 @@ jobs:
 
       - name: Prepare Data Directory
         run: |
-          rm -rf community publish
-          mkdir -p community/data publish
+          rm -rf community publish clean_geoip
+          mkdir -p community/data publish clean_geoip
 
       # -------------------------------------------------------------
-      # STEP BUILD GEOIP DARI FOLDER GEOIP (DIPERBAIKI)
+      # STEP BUILD GEOIP MENGGUNAKAN GO ENGINE (DENGAN SANITIZER)
       # -------------------------------------------------------------
       - name: Build Custom GeoIP with Go Engine
         run: |
-          # 1. Clone repository tool geo MetaCubeX
+          # 1. Lokasi folder geoip asli
+          GEOIP_SRC="./geoip"
+          if [ ! -d "$GEOIP_SRC" ]; then
+            GEOIP_SRC="./ocrule/geoip"
+          fi
+
+          # 2. Sanitasi seluruh file .txt agar format IP/CIDR bersih & murni
+          echo "Cleaning files from: $GEOIP_SRC"
+          for f in $GEOIP_SRC/*.txt; do
+            if [ -f "$f" ]; then
+              filename=$(basename "$f")
+              cat "$f" | sed 's/\r//g' | awk '
+                !/^#/ && !/^!/ && NF {
+                  gsub(/^[ \t]*IP-CIDR,/, "");
+                  gsub(/^[ \t]*IP-CIDR6,/, "");
+                  gsub(/,/ , "");
+                  gsub(/[ \t]/, "");
+                  if ($0 ~ /^[0-9a-fA-F:\.\/]+$/) print $0
+                }
+              ' > "./clean_geoip/$filename"
+            fi
+          done
+
+          # 3. Clone tool geo MetaCubeX
           git clone --depth 1 https://github.com/metacubex/geo.git ./geo_tool
           
-          # 2. Cari letak folder geoip (root / ocrule/geoip) dan buat skrip Go
+          # 4. Buat skrip pembangun GeoIP
           cat << 'EOF' > ./geo_tool/build_geoip.go
           package main
 
@@ -82,17 +105,11 @@ jobs:
           func main() {
           	cwd, _ := os.Getwd()
           	rootDir := filepath.Join(cwd, "..")
-          	
-          	// Deteksi folder geoip di root atau subfolder
-          	inputDir := filepath.Join(rootDir, "geoip")
-          	if _, err := os.Stat(inputDir); os.IsNotExist(err) {
-          		inputDir = filepath.Join(rootDir, "ocrule", "geoip")
-          	}
-
+          	inputDir := filepath.Join(rootDir, "clean_geoip")
           	outputFile := filepath.Join(rootDir, "publish", "geoip.dat")
 
-          	fmt.Println("Menggunakan folder sumber IP:", inputDir)
-          	fmt.Println("File output:", outputFile)
+          	fmt.Println("Reading cleaned IP files from:", inputDir)
+          	fmt.Println("Generating file:", outputFile)
 
           	err := convert.ConvertIP("text", "v2ray", inputDir, outputFile)
           	if err != nil {
@@ -102,7 +119,7 @@ jobs:
           }
 EOF
 
-          # 3. Eksekusi kompilasi
+          # 5. Jalankan proses kompilasi
           cd ./geo_tool
           go run build_geoip.go
           cd ..
