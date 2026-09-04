@@ -59,21 +59,21 @@ jobs:
           mkdir -p community/data publish geoip_text
 
       # -------------------------------------------------------------
-      # STEP BUILD CUSTOM GEOIP DARI TEKS POLOS LOYALSOLDIER (Tanpa CN)
+      # STEP BUILD CUSTOM GEOIP DARI TEKS POLOS LOYALSOLDIER
       # -------------------------------------------------------------
       - name: Build Custom GeoIP from Loyalsoldier Plain Text
         run: |
-          # 1. Unduh file IP teks polos yang dibutuhkan saja (Tanpa CN)
-          curl -sSL "https://raw.githubusercontent.com/Loyalsoldier/geoip/release/text/facebook.txt" -o ./geoip_text/facebook
-          curl -sSL "https://raw.githubusercontent.com/Loyalsoldier/geoip/release/text/google.txt" -o ./geoip_text/google
-          curl -sSL "https://raw.githubusercontent.com/Loyalsoldier/geoip/release/text/telegram.txt" -o ./geoip_text/telegram
-          curl -sSL "https://raw.githubusercontent.com/Loyalsoldier/geoip/release/text/twitter.txt" -o ./geoip_text/twitter
-          curl -sSL "https://raw.githubusercontent.com/Loyalsoldier/geoip/release/text/cloudflare.txt" -o ./geoip_text/cloudflare
-          curl -sSL "https://raw.githubusercontent.com/Loyalsoldier/geoip/release/text/netflix.txt" -o ./geoip_text/netflix
-          curl -sSL "https://raw.githubusercontent.com/Loyalsoldier/geoip/release/text/private.txt" -o ./geoip_text/private
-          curl -sSL "https://raw.githubusercontent.com/Loyalsoldier/geoip/release/text/id.txt" -o ./geoip_text/id
+          # 1. Unduh file IP teks polos beserta ekstensi .txt
+          curl -sSL "https://raw.githubusercontent.com/Loyalsoldier/geoip/release/text/facebook.txt" -o ./geoip_text/facebook.txt
+          curl -sSL "https://raw.githubusercontent.com/Loyalsoldier/geoip/release/text/google.txt" -o ./geoip_text/google.txt
+          curl -sSL "https://raw.githubusercontent.com/Loyalsoldier/geoip/release/text/telegram.txt" -o ./geoip_text/telegram.txt
+          curl -sSL "https://raw.githubusercontent.com/Loyalsoldier/geoip/release/text/twitter.txt" -o ./geoip_text/twitter.txt
+          curl -sSL "https://raw.githubusercontent.com/Loyalsoldier/geoip/release/text/cloudflare.txt" -o ./geoip_text/cloudflare.txt
+          curl -sSL "https://raw.githubusercontent.com/Loyalsoldier/geoip/release/text/netflix.txt" -o ./geoip_text/netflix.txt
+          curl -sSL "https://raw.githubusercontent.com/Loyalsoldier/geoip/release/text/private.txt" -o ./geoip_text/private.txt
+          curl -sSL "https://raw.githubusercontent.com/Loyalsoldier/geoip/release/text/id.txt" -o ./geoip_text/id.txt
 
-          # 2. Buat config.json dengan input tipe 'plaintext'
+          # 2. Buat config.json untuk mengompilasi semua file .txt di folder geoip_text
           cat << 'EOF' > ./geoip_text/config.json
           {
             "input": [
@@ -100,7 +100,7 @@ EOF
 
           # 3. Kompilasi teks IP menjadi geoip.dat biner menggunakan tool V2Fly
           go install github.com/v2fly/geoip@latest
-          $(go env GOPATH)/bin/geoip convert -c ./geoip_text/config.json || true
+          $(go env GOPATH)/bin/geoip convert -c ./geoip_text/config.json
 
       # -------------------------------------------------------------
       # STEP BUILD GEOSITE
