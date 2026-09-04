@@ -55,57 +55,15 @@ jobs:
 
       - name: Prepare Data Directory
         run: |
-          rm -rf community publish geoip_text
-          mkdir -p community/data publish geoip_text
+          rm -rf community publish
+          mkdir -p community/data publish
 
       # -------------------------------------------------------------
-      # STEP AMBIL TEKS LOYALSOLDIER DAN KOMPILASI DALAM 1 SCRIPT
+      # STEP GEOIP STABIL & LIGHTWEIGHT (~3.5MB)
       # -------------------------------------------------------------
-      - name: Download Loyalsoldier Text Rules & Build Custom GeoIP
+      - name: Get Lightweight geoip.dat
         run: |
-          # 1. Unduh otomatis semua file teks yang dibutuhkan langsung dari repo Loyalsoldier
-          BASE_URL="https://raw.githubusercontent.com/Loyalsoldier/geoip/release/text"
-          
-          curl -sSL "$BASE_URL/facebook.txt" -o ./geoip_text/facebook.txt
-          curl -sSL "$BASE_URL/google.txt" -o ./geoip_text/google.txt
-          curl -sSL "$BASE_URL/telegram.txt" -o ./geoip_text/telegram.txt
-          curl -sSL "$BASE_URL/twitter.txt" -o ./geoip_text/twitter.txt
-          curl -sSL "$BASE_URL/cloudflare.txt" -o ./geoip_text/cloudflare.txt
-          curl -sSL "$BASE_URL/cloudfront.txt" -o ./geoip_text/cloudfront.txt
-          curl -sSL "$BASE_URL/fastly.txt" -o ./geoip_text/fastly.txt
-          curl -sSL "$BASE_URL/netflix.txt" -o ./geoip_text/netflix.txt
-          curl -sSL "$BASE_URL/tor.txt" -o ./geoip_text/tor.txt
-          curl -sSL "$BASE_URL/private.txt" -o ./geoip_text/private.txt
-          curl -sSL "$BASE_URL/id.txt" -o ./geoip_text/id.txt
-
-          # 2. Buat config.json untuk generator v2fly
-          cat << 'EOF' > ./geoip_text/config.json
-          {
-            "input": [
-              {
-                "type": "plaintext",
-                "action": "add",
-                "args": {
-                  "basedir": "./geoip_text"
-                }
-              }
-            ],
-            "output": [
-              {
-                "type": "v2raygeoipdat",
-                "action": "output",
-                "args": {
-                  "outputName": "geoip.dat",
-                  "outputDir": "./publish"
-                }
-              }
-            ]
-          }
-EOF
-
-          # 3. Kompilasi file teks menjadi biner geoip.dat
-          go install github.com/v2fly/geoip@latest
-          $(go env GOPATH)/bin/geoip convert -c ./geoip_text/config.json
+          wget -q https://github.com/MetaCubeX/meta-rules-dat/releases/download/latest/geoip.dat -O ./publish/geoip.dat
 
       # -------------------------------------------------------------
       # STEP BUILD GEOSITE
