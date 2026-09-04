@@ -63,11 +63,14 @@ jobs:
       # -------------------------------------------------------------
       - name: Build Custom GeoIP with MetaCubeX Geo Tool
         run: |
-          # 1. Install tool geo resmi MetaCubeX
-          go install github.com/metacubex/geo@latest
-          
-          # 2. Kompilasi folder ./geoip (txt) langsung menjadi geoip.dat
-          $(go env GOPATH)/bin/geo convert geoip dat ./geoip ./publish/geoip.dat
+          # 1. Clone repository tool geo MetaCubeX & Kompilasi biner secara manual
+          git clone --depth 1 https://github.com/metacubex/geo.git ./geo_tool
+          cd ./geo_tool
+          go build -o ../geo_bin .
+          cd ..
+
+          # 2. Kompilasi semua file .txt di folder ./geoip milikmu langsung menjadi geoip.dat
+          ./geo_bin convert geoip dat ./geoip ./publish/geoip.dat
 
       # -------------------------------------------------------------
       # STEP BUILD GEOSITE
