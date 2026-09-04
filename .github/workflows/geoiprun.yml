@@ -75,8 +75,8 @@ jobs:
           chmod +x ./geo_bin
           mkdir -p ./publish
 
-          # 4. Eksekusi konversi langsung dari folder ./geoip
-          ./geo_bin convert ip text v2ray -f ./publish/geoip.dat ./geoip
+          # 4. Eksekusi konversi dengan sintaks flag resmi MetaCubeX
+          ./geo_bin convert ip -i text -o v2ray -f ./publish/geoip.dat ./geoip
 
       # -------------------------------------------------------------
       # STEP BUILD GEOSITE
