@@ -21,7 +21,7 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
-      - name: Setup Go & Python
+      - name: Setup Go
         uses: actions/setup-go@v5
         with:
           go-version: '1.22'
@@ -59,77 +59,15 @@ jobs:
           mkdir -p community/data publish
 
       # -------------------------------------------------------------
-      # STEP BUILD GEOIP DARI FOLDER 'geoip/' MENGGUNAKAN PYTHON
+      # STEP BUILD GEOIP MENGGUNAKAN METACUBEX GEO-COMPILER
       # -------------------------------------------------------------
-      - name: Build Custom GeoIP using Python Compiler
+      - name: Build Custom GeoIP with MetaCubeX Geo Tool
         run: |
-          pip install protobuf
+          # 1. Install tool geo resmi MetaCubeX
+          go install github.com/metacubex/geo@latest
           
-          cat << 'EOF' > make_geoip.py
-          import os
-          import glob
-          import ipaddress
-          from google.protobuf import descriptor_pool, message_factory
-
-          # Protobuf Definition for V2Ray GeoIP
-          GEOIP_PROTO = """
-          syntax = "proto3";
-          package router;
-          message CIDR {
-            bytes ip = 1;
-            uint32 prefix = 2;
-          }
-          message GeoIP {
-            string country_code = 1;
-            repeated CIDR cidr = 2;
-          }
-          message GeoIPList {
-            repeated GeoIP entry = 1;
-          }
-          """
-
-          pool = descriptor_pool.DescriptorPool()
-          file_desc = pool.Add(descriptor_pool.Default().AddSerializedFile(
-              bytes.fromhex("0a1e726f757465722e70726f746f1206726f7574657222230a0443494452120e0a02697018012001280c5202697012160a0670726566697818022001280d520670726566697822450a0547656f495012210a0c636f756e7472795f636f6465180120012809520b636f756e747279436f6465121f0a046369647218022003280b320c2e726f757465722e43494452520463696472222f0a0947656f49504c69737412220a05656e74727918012003280b320c2e726f757465722e47656f49505205656e747279")
-          ))
-          
-          factory = message_factory.MessageFactory(pool)
-          CIDR = factory.get_prototype(pool.FindMessageTypeByName("router.CIDR"))
-          GeoIP = factory.get_prototype(pool.FindMessageTypeByName("router.GeoIP"))
-          GeoIPList = factory.get_prototype(pool.FindMessageTypeByName("router.GeoIPList"))
-
-          geoip_list = GeoIPList()
-
-          txt_files = glob.glob("./geoip/*.txt")
-          print(f"Found {len(txt_files)} text files in ./geoip/")
-
-          for filepath in sorted(txt_files):
-              tag = os.path.basename(filepath).replace(".txt", "").upper()
-              geoip_entry = GeoIP(country_code=tag)
-              
-              with open(filepath, "r", encoding="utf-8") as f:
-                  for line in f:
-                      line = line.strip()
-                      if not line or line.startswith("#"):
-                          continue
-                      try:
-                          net = ipaddress.ip_network(line, strict=False)
-                          cidr_msg = CIDR(ip=net.network_address.packed, prefix=net.prefixlen)
-                          geoip_entry.cidr.append(cidr_msg)
-                      except Exception as e:
-                          pass
-
-              geoip_list.entry.append(geoip_entry)
-              print(f"Compiled tag: {tag} ({len(geoip_entry.cidr)} CIDRs)")
-
-          os.makedirs("./publish", exist_ok=True)
-          with open("./publish/geoip.dat", "wb") as f:
-              f.write(geoip_list.SerializeToString())
-
-          print("Successfully generated ./publish/geoip.dat!")
-EOF
-
-          python3 make_geoip.py
+          # 2. Kompilasi folder ./geoip (txt) langsung menjadi geoip.dat
+          $(go env GOPATH)/bin/geo convert geoip dat ./geoip ./publish/geoip.dat
 
       # -------------------------------------------------------------
       # STEP BUILD GEOSITE
