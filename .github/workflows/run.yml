@@ -55,19 +55,64 @@ jobs:
 
       - name: Prepare Data Directory
         run: |
-          rm -rf community publish
-          mkdir -p community/data publish
+          rm -rf community publish maxmind
+          mkdir -p community/data publish maxmind
 
-      - name: Get Lightweight geoip.dat (MetaCubeX - Support GEOIP,facebook & ~4MB Size)
+      # -------------------------------------------------------------
+      # STEP BUILD GEOIP DARI CSV LOYALSOLDIER (Hasil Ringan ~3MB)
+      # -------------------------------------------------------------
+      - name: Build Custom GeoIP dari CSV Loyalsoldier
         run: |
-          wget -q https://github.com/MetaCubeX/meta-rules-dat/releases/download/latest/geoip.dat -O ./publish/geoip.dat || true
+          # 1. Unduh 3 berkas CSV dari branch release Loyalsoldier
+          curl -sSL "https://raw.githubusercontent.com/Loyalsoldier/geoip/release/GeoLite2-Country-Blocks-IPv4.csv" -o ./maxmind/GeoLite2-Country-Blocks-IPv4.csv || true
+          curl -sSL "https://raw.githubusercontent.com/Loyalsoldier/geoip/release/GeoLite2-Country-Blocks-IPv6.csv" -o ./maxmind/GeoLite2-Country-Blocks-IPv6.csv || true
+          curl -sSL "https://raw.githubusercontent.com/Loyalsoldier/geoip/release/GeoLite2-Country-Locations-en.csv" -o ./maxmind/GeoLite2-Country-Locations-en.csv || true
+          
+          # 2. Buat config.json untuk memfilter tag yang dibutuhkan saja
+          cat << 'EOF' > ./maxmind/config.json
+          {
+            "input": [
+              {
+                "type": "maxmindcsv",
+                "action": "add",
+                "args": {
+                  "basedir": "./maxmind"
+                }
+              }
+            ],
+            "output": [
+              {
+                "type": "v2raygeoipdat",
+                "action": "output",
+                "args": {
+                  "outputName": "geoip.dat",
+                  "outputDir": "./publish",
+                  "wantedList": [
+                    "private",
+                    "id",
+                    "facebook",
+                    "telegram",
+                    "google",
+                    "twitter"
+                  ]
+                }
+              }
+            ]
+          }
+EOF
 
-      - name: Create lists
+          # 3. Jalankan generator Loyalsoldier
+          go install github.com/v2fly/geoip@latest
+          $(go env GOPATH)/bin/geoip convert -c ./maxmind/config.json || true
+
+      # -------------------------------------------------------------
+      # STEP BUILD GEOSITE
+      # -------------------------------------------------------------
+      - name: Create Geosite Lists
         run: |
-          # 1. RULE-ADS (Konsolidasi Total: AdGuard + StevenBlack Porn + AntiScam Light + Discord + D3Host + Adsblock Lokal)
+          # 1. RULE-ADS
           > ./community/data/rule-ads
 
-          # Ambil AdGuard DNS Filter
           wget -qO- $ADGUARD_DNS | sed 's/\r//g' | awk '
             !/^!/ && !/^#/ && NF {
               gsub(/^@@\|\|/, "");
@@ -77,7 +122,6 @@ jobs:
             }
           ' >> ./community/data/rule-ads || true
 
-          # Ambil StevenBlack Porn List (Situs Dewasa)
           wget -qO- $STEVENBLACK_PORN | sed 's/\r//g' | awk '
             !/^#/ && !/^!/ && NF {
               gsub(/^[0-9\.]+[ \t]+/, "");
@@ -85,7 +129,6 @@ jobs:
             }
           ' >> ./community/data/rule-ads || true
 
-          # Ambil AntiScam (Jarell Light & Discord)
           wget -qO- $ANTISCAM_JARELL $ANTISCAM_DISCORD | sed 's/\r//g' | awk '
             !/^#/ && !/^!/ && NF {
               gsub(/^[ \t]*\*\./, "");
@@ -95,7 +138,6 @@ jobs:
             }
           ' >> ./community/data/rule-ads || true
 
-          # Ambil D3Host
           wget -qO- $RULE_ADS_D3HOST | sed 's/\r//g' | awk '
             !/^#/ && !/^!/ && NF {
               gsub(/^[0-9\.]+[ \t]+/, "");
@@ -104,7 +146,6 @@ jobs:
             }
           ' >> ./community/data/rule-ads || true
 
-          # Ambil Adsblock Lokal (Jadahmambu)
           wget -qO- $RULE_ADS_JADAHMAMBU | sed 's/\r//g' | awk '
             !/^#/ && NF {
               gsub(/^[a-zA-Z0-9_-]+:/, "");
@@ -112,7 +153,7 @@ jobs:
             }
           ' >> ./community/data/rule-ads || true
           
-          # 2. BANK-ID (Jadahmambu)
+          # 2. BANK-ID
           > ./community/data/bank-id
           wget -qO- $RULE_BANK_JADAHMAMBU | sed 's/\r//g' | awk '
             !/^#/ && !/include:bank-id/ && NF {
@@ -126,27 +167,14 @@ jobs:
             }
           ' >> ./community/data/bank-id || true
 
-          # 3. RULE-ECO + RULE-DIRECT
-          wget -qO- $RULE_ECO $RULE_DIRECT | sed 's/\r//g' | awk '
-            !/^#/ && NF { 
-              if (/^domain:/) print substr($0, 8); 
-              else print $0 
-            }
-          ' > ./community/data/rule-eco || true
-
-          # 4. RULE-MICROSOFT
+          # 3-7. RULE LAINNYA
+          wget -qO- $RULE_ECO $RULE_DIRECT | sed 's/\r//g' | awk '!/^#/ && NF { if (/^domain:/) print substr($0, 8); else print $0 }' > ./community/data/rule-eco || true
           wget -qO- $RULE_MICROSOFT | sed 's/\r//g' | awk '!/^#/ && NF { if (/^domain:/) print substr($0, 8); else print $0 }' > ./community/data/rule-microsoft || true
-
-          # 5. RULE-SOSMED
           wget -qO- $RULE_SOSMED | sed 's/\r//g' | awk '!/^#/ && NF { if (/^domain:/) print substr($0, 8); else print $0 }' > ./community/data/sosmed || true
-
-          # 6. RULE-STREAMING
           wget -qO- $RULE_STREAMING | sed 's/\r//g' | awk '!/^#/ && NF { if (/^domain:/) print substr($0, 8); else print $0 }' > ./community/data/streaming || true
-
-          # 7. RULE-VIDCONFERENCE
           wget -qO- $RULE_VIDCONFERENCE | sed 's/\r//g' | awk '!/^#/ && NF { if (/^domain:/) print substr($0, 8); else print $0 }' > ./community/data/vidconference || true
 
-          # Dummy rules wajib untuk compiler v2fly
+          # Dummy rules wajib
           echo "full:example-direct.com" > ./community/data/cn
           echo "full:example-proxy.com" > ./community/data/geolocation-cn
 
@@ -154,12 +182,10 @@ jobs:
         run: |
           grep -hroE 'include:[a-zA-Z0-9\.\-]+' ./community/data/ | awk -F: '{print tolower($2)}' | sort -u | while read -r list_name; do
             if [ ! -f "./community/data/$list_name" ]; then
-              echo "Membuat berkas dummy aman untuk dependensi: $list_name"
               echo "full:example-fix-$list_name.com" > "./community/data/$list_name"
             fi
           done
           
-          # Hapus entri ganda di setiap berkas secara otomatis
           for f in ./community/data/*; do
             if [ -f "$f" ]; then
               sort -u "$f" -o "$f"
@@ -169,7 +195,7 @@ jobs:
       - name: Build geosite.dat using Go Install
         run: |
           go install github.com/v2fly/domain-list-community@latest
-          ~/go/bin/domain-list-community --datapath=./community/data
+          $(go env GOPATH)/bin/domain-list-community --datapath=./community/data
           mv ./dlc.dat ./publish/geosite.dat
 
       - name: Validate Output Files
