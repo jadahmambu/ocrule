@@ -55,15 +55,52 @@ jobs:
 
       - name: Prepare Data Directory
         run: |
-          rm -rf community publish
-          mkdir -p community/data publish
+          rm -rf community publish geoip_text
+          mkdir -p community/data publish geoip_text
 
       # -------------------------------------------------------------
-      # STEP GEOIP LIGHTWEIGHT (~3.5MB, Support Semua Tag Medsos)
+      # STEP BUILD CUSTOM GEOIP DARI TEKS POLOS LOYALSOLDIER (Tanpa CN)
       # -------------------------------------------------------------
-      - name: Get Lightweight geoip.dat
+      - name: Build Custom GeoIP from Loyalsoldier Plain Text
         run: |
-          wget -q https://github.com/MetaCubeX/meta-rules-dat/releases/download/latest/geoip.dat -O ./publish/geoip.dat || true
+          # 1. Unduh file IP teks polos yang dibutuhkan saja (Tanpa CN)
+          curl -sSL "https://raw.githubusercontent.com/Loyalsoldier/geoip/release/text/facebook.txt" -o ./geoip_text/facebook
+          curl -sSL "https://raw.githubusercontent.com/Loyalsoldier/geoip/release/text/google.txt" -o ./geoip_text/google
+          curl -sSL "https://raw.githubusercontent.com/Loyalsoldier/geoip/release/text/telegram.txt" -o ./geoip_text/telegram
+          curl -sSL "https://raw.githubusercontent.com/Loyalsoldier/geoip/release/text/twitter.txt" -o ./geoip_text/twitter
+          curl -sSL "https://raw.githubusercontent.com/Loyalsoldier/geoip/release/text/cloudflare.txt" -o ./geoip_text/cloudflare
+          curl -sSL "https://raw.githubusercontent.com/Loyalsoldier/geoip/release/text/netflix.txt" -o ./geoip_text/netflix
+          curl -sSL "https://raw.githubusercontent.com/Loyalsoldier/geoip/release/text/private.txt" -o ./geoip_text/private
+          curl -sSL "https://raw.githubusercontent.com/Loyalsoldier/geoip/release/text/id.txt" -o ./geoip_text/id
+
+          # 2. Buat config.json dengan input tipe 'plaintext'
+          cat << 'EOF' > ./geoip_text/config.json
+          {
+            "input": [
+              {
+                "type": "plaintext",
+                "action": "add",
+                "args": {
+                  "basedir": "./geoip_text"
+                }
+              }
+            ],
+            "output": [
+              {
+                "type": "v2raygeoipdat",
+                "action": "output",
+                "args": {
+                  "outputName": "geoip.dat",
+                  "outputDir": "./publish"
+                }
+              }
+            ]
+          }
+EOF
+
+          # 3. Kompilasi teks IP menjadi geoip.dat biner menggunakan tool V2Fly
+          go install github.com/v2fly/geoip@latest
+          $(go env GOPATH)/bin/geoip convert -c ./geoip_text/config.json || true
 
       # -------------------------------------------------------------
       # STEP BUILD GEOSITE
@@ -155,7 +192,7 @@ jobs:
       - name: Build geosite.dat using Go Install
         run: |
           go install github.com/v2fly/domain-list-community@latest
-          ~/go/bin/domain-list-community --datapath=./community/data
+          $(go env GOPATH)/bin/domain-list-community --datapath=./community/data
           mv ./dlc.dat ./publish/geosite.dat
 
       - name: Validate Output Files
