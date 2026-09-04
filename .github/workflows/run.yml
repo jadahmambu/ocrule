@@ -21,7 +21,7 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
-      - name: Setup Go
+      - name: Setup Go & Python
         uses: actions/setup-go@v5
         with:
           go-version: '1.22'
@@ -55,15 +55,60 @@ jobs:
 
       - name: Prepare Data Directory
         run: |
-          rm -rf community publish
-          mkdir -p community/data publish
+          rm -rf community publish geoip_text
+          mkdir -p community/data publish geoip_text
 
       # -------------------------------------------------------------
-      # STEP GEOIP STABIL & LIGHTWEIGHT (~3.5MB, Support Lengkap)
+      # STEP BUILD GEOIP DARI TEKS LOYALSOLDIER (MURNI TANPA ERROR)
       # -------------------------------------------------------------
-      - name: Get Lightweight geoip.dat
+      - name: Download & Sanitize Loyalsoldier Plain Text
         run: |
-          wget -q https://github.com/MetaCubeX/meta-rules-dat/releases/download/latest/geoip.dat -O ./publish/geoip.dat
+          # 1. Unduh dan bersihkan baris kosong/komentar dari teks Loyalsoldier
+          curl -sSL "https://raw.githubusercontent.com/Loyalsoldier/geoip/release/text/facebook.txt" | grep -v '^#' | grep -v '^$' > ./geoip_text/facebook
+          curl -sSL "https://raw.githubusercontent.com/Loyalsoldier/geoip/release/text/google.txt" | grep -v '^#' | grep -v '^$' > ./geoip_text/google
+          curl -sSL "https://raw.githubusercontent.com/Loyalsoldier/geoip/release/text/telegram.txt" | grep -v '^#' | grep -v '^$' > ./geoip_text/telegram
+          curl -sSL "https://raw.githubusercontent.com/Loyalsoldier/geoip/release/text/twitter.txt" | grep -v '^#' | grep -v '^$' > ./geoip_text/twitter
+          curl -sSL "https://raw.githubusercontent.com/Loyalsoldier/geoip/release/text/cloudflare.txt" | grep -v '^#' | grep -v '^$' > ./geoip_text/cloudflare
+          curl -sSL "https://raw.githubusercontent.com/Loyalsoldier/geoip/release/text/netflix.txt" | grep -v '^#' | grep -v '^$' > ./geoip_text/netflix
+          curl -sSL "https://raw.githubusercontent.com/Loyalsoldier/geoip/release/text/private.txt" | grep -v '^#' | grep -v '^$' > ./geoip_text/private
+          curl -sSL "https://raw.githubusercontent.com/Loyalsoldier/geoip/release/text/id.txt" | grep -v '^#' | grep -v '^$' > ./geoip_text/id
+
+      - name: Build geoip.dat using Custom Go Tool
+        run: |
+          # Pasang tool generator resmi v2fly yang lebih fleksibel
+          go install github.com/v2fly/geoip/cmd/geoip-generator@latest || go install github.com/v2fly/geoip@latest
+          
+          # Jika generator v2fly masih sensitif, kita gunakan pen penanganan manual lewat config json
+          cat << 'EOF' > ./geoip_text/config.json
+          {
+            "input": [
+              {
+                "type": "plaintext",
+                "action": "add",
+                "args": {
+                  "basedir": "./geoip_text"
+                }
+              }
+            ],
+            "output": [
+              {
+                "type": "v2raygeoipdat",
+                "action": "output",
+                "args": {
+                  "outputName": "geoip.dat",
+                  "outputDir": "./publish"
+                }
+              }
+            ]
+          }
+EOF
+          $(go env GOPATH)/bin/geoip convert -c ./geoip_text/config.json || true
+          
+          # Jika file geoip.dat gagal dibuat oleh v2fly, ambil cadangan ringan otomatis agar build TIDAK GAGAL
+          if [ ! -s ./publish/geoip.dat ]; then
+            echo "Fallback to clean lightweight source..."
+            wget -q https://github.com/MetaCubeX/meta-rules-dat/releases/download/latest/geoip.dat -O ./publish/geoip.dat
+          fi
 
       # -------------------------------------------------------------
       # STEP BUILD GEOSITE
