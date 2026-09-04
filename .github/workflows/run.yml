@@ -55,55 +55,15 @@ jobs:
 
       - name: Prepare Data Directory
         run: |
-          rm -rf community publish maxmind
-          mkdir -p community/data publish maxmind
+          rm -rf community publish
+          mkdir -p community/data publish
 
       # -------------------------------------------------------------
-      # STEP BUILD GEOIP DARI CSV LOYALSOLDIER (Hasil Ringan ~3MB)
+      # STEP GEOIP LIGHTWEIGHT (Support: facebook, google, telegram, id, dll)
       # -------------------------------------------------------------
-      - name: Build Custom GeoIP dari CSV Loyalsoldier
+      - name: Get Lightweight geoip.dat
         run: |
-          # 1. Unduh 3 berkas CSV dari branch release Loyalsoldier
-          curl -sSL "https://raw.githubusercontent.com/Loyalsoldier/geoip/release/GeoLite2-Country-Blocks-IPv4.csv" -o ./maxmind/GeoLite2-Country-Blocks-IPv4.csv || true
-          curl -sSL "https://raw.githubusercontent.com/Loyalsoldier/geoip/release/GeoLite2-Country-Blocks-IPv6.csv" -o ./maxmind/GeoLite2-Country-Blocks-IPv6.csv || true
-          curl -sSL "https://raw.githubusercontent.com/Loyalsoldier/geoip/release/GeoLite2-Country-Locations-en.csv" -o ./maxmind/GeoLite2-Country-Locations-en.csv || true
-          
-          # 2. Buat config.json untuk memfilter tag yang dibutuhkan saja
-          cat << 'EOF' > ./maxmind/config.json
-          {
-            "input": [
-              {
-                "type": "maxmindcsv",
-                "action": "add",
-                "args": {
-                  "basedir": "./maxmind"
-                }
-              }
-            ],
-            "output": [
-              {
-                "type": "v2raygeoipdat",
-                "action": "output",
-                "args": {
-                  "outputName": "geoip.dat",
-                  "outputDir": "./publish",
-                  "wantedList": [
-                    "private",
-                    "id",
-                    "facebook",
-                    "telegram",
-                    "google",
-                    "twitter"
-                  ]
-                }
-              }
-            ]
-          }
-EOF
-
-          # 3. Jalankan generator Loyalsoldier
-          go install github.com/v2fly/geoip@latest
-          $(go env GOPATH)/bin/geoip convert -c ./maxmind/config.json || true
+          wget -q https://github.com/MetaCubeX/meta-rules-dat/releases/download/latest/geoip.dat -O ./publish/geoip.dat || true
 
       # -------------------------------------------------------------
       # STEP BUILD GEOSITE
@@ -195,7 +155,7 @@ EOF
       - name: Build geosite.dat using Go Install
         run: |
           go install github.com/v2fly/domain-list-community@latest
-          $(go env GOPATH)/bin/domain-list-community --datapath=./community/data
+          ~/go/bin/domain-list-community --datapath=./community/data
           mv ./dlc.dat ./publish/geosite.dat
 
       - name: Validate Output Files
