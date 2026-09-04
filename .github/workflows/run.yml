@@ -63,7 +63,7 @@ jobs:
       # -------------------------------------------------------------
       - name: Get Lightweight geoip.dat
         run: |
-          wget -q https://github.com/MetaCubeX/meta-rules-dat/releases/download/latest/geoip.dat -O ./publish/geoip.dat
+          wget -q https://github.com/MetaCubeX/meta-rules-dat/releases/download/latest/geoip-lite.dat -O ./publish/geoip.dat
 
       # -------------------------------------------------------------
       # STEP BUILD GEOSITE
