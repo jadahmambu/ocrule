@@ -55,56 +55,15 @@ jobs:
 
       - name: Prepare Data Directory
         run: |
-          rm -rf community publish geoip_raw
-          mkdir -p community/data publish geoip_raw
+          rm -rf community publish
+          mkdir -p community/data publish
 
       # -------------------------------------------------------------
-      # STEP MERGE GEOIP CUSTOM DARI DAT TERPISAH LOYALSOLDIER
+      # STEP GEOIP LIGHTWEIGHT (~3.5MB, Support Semua Tag Medsos)
       # -------------------------------------------------------------
-      - name: Build Custom GeoIP from Loyalsoldier Dat Fragments
+      - name: Get Lightweight geoip.dat
         run: |
-          # 1. Unduh pecahan .dat spesifik yang kamu inginkan dari Loyalsoldier
-          curl -sSL "https://raw.githubusercontent.com/Loyalsoldier/geoip/release/dat/facebook.dat" -o ./geoip_raw/facebook.dat
-          curl -sSL "https://raw.githubusercontent.com/Loyalsoldier/geoip/release/dat/google.dat" -o ./geoip_raw/google.dat
-          curl -sSL "https://raw.githubusercontent.com/Loyalsoldier/geoip/release/dat/telegram.dat" -o ./geoip_raw/telegram.dat
-          curl -sSL "https://raw.githubusercontent.com/Loyalsoldier/geoip/release/dat/twitter.dat" -o ./geoip_raw/twitter.dat
-          curl -sSL "https://raw.githubusercontent.com/Loyalsoldier/geoip/release/dat/cloudflare.dat" -o ./geoip_raw/cloudflare.dat
-          curl -sSL "https://raw.githubusercontent.com/Loyalsoldier/geoip/release/dat/netflix.dat" -o ./geoip_raw/netflix.dat
-          curl -sSL "https://raw.githubusercontent.com/Loyalsoldier/geoip/release/dat/private.dat" -o ./geoip_raw/private.dat
-          curl -sSL "https://raw.githubusercontent.com/Loyalsoldier/geoip/release/dat/id.dat" -o ./geoip_raw/id.dat
-
-          # 2. Buat config.json untuk menggabungkan berkas .dat di atas
-          cat << 'EOF' > ./geoip_raw/config.json
-          {
-            "input": [
-              { "type": "v2raygeoipdat", "action": "add", "args": { "basedir": "./geoip_raw" } }
-            ],
-            "output": [
-              {
-                "type": "v2raygeoipdat",
-                "action": "output",
-                "args": {
-                  "outputName": "geoip.dat",
-                  "outputDir": "./publish",
-                  "wantedList": [
-                    "private",
-                    "id",
-                    "facebook",
-                    "google",
-                    "telegram",
-                    "twitter",
-                    "cloudflare",
-                    "netflix"
-                  ]
-                }
-              }
-            ]
-          }
-EOF
-
-          # 3. Jalankan Generator GeoIP V2Fly
-          go install github.com/v2fly/geoip@latest
-          $(go env GOPATH)/bin/geoip convert -c ./geoip_raw/config.json || true
+          wget -q https://github.com/MetaCubeX/meta-rules-dat/releases/download/latest/geoip.dat -O ./publish/geoip.dat || true
 
       # -------------------------------------------------------------
       # STEP BUILD GEOSITE
@@ -196,7 +155,7 @@ EOF
       - name: Build geosite.dat using Go Install
         run: |
           go install github.com/v2fly/domain-list-community@latest
-          $(go env GOPATH)/bin/domain-list-community --datapath=./community/data
+          ~/go/bin/domain-list-community --datapath=./community/data
           mv ./dlc.dat ./publish/geosite.dat
 
       - name: Validate Output Files
