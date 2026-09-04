@@ -69,7 +69,10 @@ jobs:
           go build -o ../geo_bin .
           cd ..
 
-          # 2. Kompilasi semua file .txt di folder ./geoip milikmu langsung menjadi geoip.dat
+          # 2. Beri izin eksekusi pada biner
+          chmod +x ./geo_bin
+
+          # 3. Kompilasi semua file .txt di folder ./geoip milikmu langsung menjadi geoip.dat
           ./geo_bin convert geoip dat ./geoip ./publish/geoip.dat
 
       # -------------------------------------------------------------
