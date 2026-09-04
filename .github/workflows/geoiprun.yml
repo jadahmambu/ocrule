@@ -71,12 +71,12 @@ jobs:
           go build -o ../../../geo_bin .
           cd ../../../
 
-          # 3. Beri izin eksekusi
+          # 3. Beri izin eksekusi & siapkan folder output
           chmod +x ./geo_bin
-
-          # 4. Buat folder publish secara manual & jalankan konversi
           mkdir -p ./publish
-          ./geo_bin convert geoip text dat --input ./geoip --output ./publish/geoip.dat
+
+          # 4. Konversi teks dari ./geoip menjadi ./publish/geoip.dat
+          ./geo_bin convert ip dat -i ./geoip -o ./publish/geoip.dat
 
       # -------------------------------------------------------------
       # STEP BUILD GEOSITE
