@@ -59,14 +59,14 @@ jobs:
           mkdir -p community/data publish
 
       # -------------------------------------------------------------
-      # STEP BUILD GEOIP DARI FOLDER OCRULE/GEOIP
+      # STEP BUILD GEOIP DARI FOLDER GEOIP (DIPERBAIKI)
       # -------------------------------------------------------------
-      - name: Build Custom GeoIP using Go Engine
+      - name: Build Custom GeoIP with Go Engine
         run: |
           # 1. Clone repository tool geo MetaCubeX
           git clone --depth 1 https://github.com/metacubex/geo.git ./geo_tool
           
-          # 2. Buat skrip pembangun GeoIP Go khusus yang mengarah ke ocrule/geoip
+          # 2. Cari letak folder geoip (root / ocrule/geoip) dan buat skrip Go
           cat << 'EOF' > ./geo_tool/build_geoip.go
           package main
 
@@ -80,23 +80,29 @@ jobs:
           )
 
           func main() {
-          	// Ambil path absolut repository
           	cwd, _ := os.Getwd()
-          	inputDir := filepath.Join(cwd, "..", "ocrule", "geoip")
-          	outputFile := filepath.Join(cwd, "..", "publish", "geoip.dat")
+          	rootDir := filepath.Join(cwd, "..")
+          	
+          	// Deteksi folder geoip di root atau subfolder
+          	inputDir := filepath.Join(rootDir, "geoip")
+          	if _, err := os.Stat(inputDir); os.IsNotExist(err) {
+          		inputDir = filepath.Join(rootDir, "ocrule", "geoip")
+          	}
 
-          	fmt.Println("Source directory:", inputDir)
-          	fmt.Println("Target output file:", outputFile)
+          	outputFile := filepath.Join(rootDir, "publish", "geoip.dat")
+
+          	fmt.Println("Menggunakan folder sumber IP:", inputDir)
+          	fmt.Println("File output:", outputFile)
 
           	err := convert.ConvertIP("text", "v2ray", inputDir, outputFile)
           	if err != nil {
-          		log.Fatalf("Failed to convert GeoIP: %v", err)
+          		log.Fatalf("Gagal konversi GeoIP: %v", err)
           	}
-          	fmt.Println("Successfully generated GeoIP binary file.")
+          	fmt.Println("Berhasil membuat file geoip.dat!")
           }
 EOF
 
-          # 3. Eksekusi skrip kompilasi
+          # 3. Eksekusi kompilasi
           cd ./geo_tool
           go run build_geoip.go
           cd ..
