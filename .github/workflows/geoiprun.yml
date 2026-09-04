@@ -59,25 +59,31 @@ jobs:
           mkdir -p community/data publish
 
       # -------------------------------------------------------------
-      # STEP BUILD GEOIP DARI FOLDER 'geoip' LOKAL DI REPOSITORI
+      # STEP BUILD GEOIP DARI FOLDER 'geoip/' REPO DENGAN AMAN
       # -------------------------------------------------------------
-      - name: Build Custom GeoIP from Local Text Files
+      - name: Build GeoIP from Local Text Files
         run: |
-          # 1. Pastikan folder ./geoip ada di repositori
+          # 1. Pastikan folder ./geoip ada
           if [ ! -d "./geoip" ]; then
-            echo "Error: Folder ./geoip tidak ditemukan di repositori!"
+            echo "Error: Folder ./geoip tidak ditemukan!"
             exit 1
           fi
 
-          # 2. Buat config.json untuk generator v2fly
-          cat << 'EOF' > ./geoip/config.json
+          # 2. Tambahkan dummy country list (CN dan US) agar v2fly generator tidak crash
+          mkdir -p ./geoip_build
+          cp ./geoip/*.txt ./geoip_build/
+          echo "1.0.1.0/24" > ./geoip_build/cn.txt
+          echo "1.0.2.0/24" > ./geoip_build/us.txt
+
+          # 3. Buat config.json
+          cat << 'EOF' > ./geoip_build/config.json
           {
             "input": [
               {
                 "type": "plaintext",
                 "action": "add",
                 "args": {
-                  "basedir": "./geoip"
+                  "basedir": "./geoip_build"
                 }
               }
             ],
@@ -94,9 +100,9 @@ jobs:
           }
 EOF
 
-          # 3. Kompilasi file teks dari folder geoip menjadi geoip.dat
+          # 4. Kompilasi menggunakan v2fly/geoip
           go install github.com/v2fly/geoip@latest
-          $(go env GOPATH)/bin/geoip convert -c ./geoip/config.json
+          $(go env GOPATH)/bin/geoip convert -c ./geoip_build/config.json
 
       # -------------------------------------------------------------
       # STEP BUILD GEOSITE
