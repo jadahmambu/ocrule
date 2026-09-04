@@ -59,27 +59,47 @@ jobs:
           mkdir -p community/data publish
 
       # -------------------------------------------------------------
-      # STEP BUILD GEOIP MENGGUNAKAN METACUBEX GEO-COMPILER
+      # STEP BUILD GEOIP DARI FOLDER OCRULE/GEOIP
       # -------------------------------------------------------------
-      - name: Build Custom GeoIP with MetaCubeX Geo Tool
+      - name: Build Custom GeoIP using Go Engine
         run: |
           # 1. Clone repository tool geo MetaCubeX
           git clone --depth 1 https://github.com/metacubex/geo.git ./geo_tool
           
-          # 2. Kompilasi biner langsung dari cmd/geo
-          cd ./geo_tool/cmd/geo
-          go build -o ../../../geo_bin .
-          cd ../../../
+          # 2. Buat skrip pembangun GeoIP Go khusus yang mengarah ke ocrule/geoip
+          cat << 'EOF' > ./geo_tool/build_geoip.go
+          package main
 
-          # 3. Beri izin eksekusi & buat folder publish
-          chmod +x ./geo_bin
-          mkdir -p ./publish
+          import (
+          	"fmt"
+          	"log"
+          	"os"
+          	"path/filepath"
 
-          # 4. Gabungkan seluruh file .txt di folder geoip menjadi 1 file gabungan (combined.txt)
-          cat ./geoip/*.txt > ./combined.txt
+          	"github.com/metacubex/geo/convert"
+          )
 
-          # 5. Konversi file combined.txt tunggal ke geoip.dat
-          ./geo_bin convert ip -i text -o v2ray -f ./publish/geoip.dat ./combined.txt
+          func main() {
+          	// Ambil path absolut repository
+          	cwd, _ := os.Getwd()
+          	inputDir := filepath.Join(cwd, "..", "ocrule", "geoip")
+          	outputFile := filepath.Join(cwd, "..", "publish", "geoip.dat")
+
+          	fmt.Println("Source directory:", inputDir)
+          	fmt.Println("Target output file:", outputFile)
+
+          	err := convert.ConvertIP("text", "v2ray", inputDir, outputFile)
+          	if err != nil {
+          		log.Fatalf("Failed to convert GeoIP: %v", err)
+          	}
+          	fmt.Println("Successfully generated GeoIP binary file.")
+          }
+EOF
+
+          # 3. Eksekusi skrip kompilasi
+          cd ./geo_tool
+          go run build_geoip.go
+          cd ..
 
       # -------------------------------------------------------------
       # STEP BUILD GEOSITE
