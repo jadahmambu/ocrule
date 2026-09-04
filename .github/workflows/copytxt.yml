@@ -1,0 +1,47 @@
+name: Auto Download GeoIP Text to Repo
+
+on:
+  workflow_dispatch: # Bisa dijalankan manual dari menu Actions
+  schedule:
+    - cron: '0 0 * * 1' # Otomatis update seminggu sekali (Senin)
+
+permissions:
+  contents: write
+
+jobs:
+  download-and-commit:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Download Text Files to /geoip Folder
+        run: |
+          mkdir -p ./geoip
+          BASE_URL="https://raw.githubusercontent.com/Loyalsoldier/geoip/release/text"
+          
+          curl -sSL "$BASE_URL/facebook.txt" -o ./geoip/facebook.txt
+          curl -sSL "$BASE_URL/google.txt" -o ./geoip/google.txt
+          curl -sSL "$BASE_URL/telegram.txt" -o ./geoip/telegram.txt
+          curl -sSL "$BASE_URL/twitter.txt" -o ./geoip/twitter.txt
+          curl -sSL "$BASE_URL/cloudflare.txt" -o ./geoip/cloudflare.txt
+          curl -sSL "$BASE_URL/cloudfront.txt" -o ./geoip/cloudfront.txt
+          curl -sSL "$BASE_URL/fastly.txt" -o ./geoip/fastly.txt
+          curl -sSL "$BASE_URL/netflix.txt" -o ./geoip/netflix.txt
+          curl -sSL "$BASE_URL/tor.txt" -o ./geoip/tor.txt
+          curl -sSL "$BASE_URL/private.txt" -o ./geoip/private.txt
+          curl -sSL "$BASE_URL/id.txt" -o ./geoip/id.txt
+
+      - name: Commit and Push to Repository
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git add ./geoip/*.txt
+          if git diff --staged --quiet; then
+            echo "Tidak ada perubahan pada file teks GeoIP."
+          else
+            git commit -m "Update GeoIP text files [skip ci]"
+            git push
+          fi
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
