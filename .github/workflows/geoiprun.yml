@@ -66,17 +66,17 @@ jobs:
           # 1. Clone repository tool geo MetaCubeX
           git clone --depth 1 https://github.com/metacubex/geo.git ./geo_tool
           
-          # 2. Kompilasi biner langsung dari cmd/geo
+          # 2. Kompilasi biner dari cmd/geo
           cd ./geo_tool/cmd/geo
           go build -o ../../../geo_bin .
           cd ../../../
 
-          # 3. Beri izin eksekusi & siapkan folder output
+          # 3. Beri izin eksekusi & buat folder publish
           chmod +x ./geo_bin
           mkdir -p ./publish
 
-          # 4. Jalankan konversi dengan direktori kerja ./geoip dan argumen folder .
-          ./geo_bin convert ip -i text -o v2ray -D ./geoip -f ../publish/geoip.dat .
+          # 4. Eksekusi konversi langsung dari folder ./geoip
+          ./geo_bin convert ip text v2ray -f ./publish/geoip.dat ./geoip
 
       # -------------------------------------------------------------
       # STEP BUILD GEOSITE
