@@ -66,7 +66,7 @@ jobs:
           # 1. Clone repository tool geo MetaCubeX
           git clone --depth 1 https://github.com/metacubex/geo.git ./geo_tool
           
-          # 2. Kompilasi biner langsung dari sub-folder cmd/geo
+          # 2. Kompilasi biner langsung dari cmd/geo
           cd ./geo_tool/cmd/geo
           go build -o ../../../geo_bin .
           cd ../../../
@@ -74,8 +74,9 @@ jobs:
           # 3. Beri izin eksekusi
           chmod +x ./geo_bin
 
-          # 4. Kompilasi folder ./geoip milikmu menjadi geoip.dat
-          ./geo_bin convert geoip dat ./geoip ./publish/geoip.dat
+          # 4. Buat folder publish secara manual & jalankan konversi
+          mkdir -p ./publish
+          ./geo_bin convert geoip text dat --input ./geoip --output ./publish/geoip.dat
 
       # -------------------------------------------------------------
       # STEP BUILD GEOSITE
