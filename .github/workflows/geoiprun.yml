@@ -66,7 +66,7 @@ jobs:
           # 1. Clone repository tool geo MetaCubeX
           git clone --depth 1 https://github.com/metacubex/geo.git ./geo_tool
           
-          # 2. Kompilasi biner dari cmd/geo
+          # 2. Kompilasi biner langsung dari cmd/geo
           cd ./geo_tool/cmd/geo
           go build -o ../../../geo_bin .
           cd ../../../
@@ -75,8 +75,11 @@ jobs:
           chmod +x ./geo_bin
           mkdir -p ./publish
 
-          # 4. Eksekusi konversi dengan sintaks flag resmi MetaCubeX
-          ./geo_bin convert ip -i text -o v2ray -f ./publish/geoip.dat ./geoip
+          # 4. Gabungkan seluruh file .txt di folder geoip menjadi 1 file gabungan (combined.txt)
+          cat ./geoip/*.txt > ./combined.txt
+
+          # 5. Konversi file combined.txt tunggal ke geoip.dat
+          ./geo_bin convert ip -i text -o v2ray -f ./publish/geoip.dat ./combined.txt
 
       # -------------------------------------------------------------
       # STEP BUILD GEOSITE
