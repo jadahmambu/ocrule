@@ -4,7 +4,8 @@
       "type": "text",
       "action": "add",
       "args": {
-        "dir": "."
+        "inputDir": ".",
+        "name": "geoipok"
       }
     }
   ],
@@ -13,7 +14,7 @@
       "type": "v2ray",
       "action": "output",
       "args": {
-        "outputName": "geoip.dat"
+        "outputName": "geoipok.dat"
       }
     }
   ]
