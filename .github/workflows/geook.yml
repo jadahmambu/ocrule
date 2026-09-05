@@ -34,14 +34,7 @@ jobs:
         with:
           repository: v2fly/geoip
           path: geoip_tool
-          fetch-depth: 0
-
-      - name: Rollback Builder ke Versi Stabil (2023)
-        run: |
-          cd geoip_tool
-          STABLE_COMMIT=$(git rev-list -n 1 --before="2023-11-01" HEAD)
-          git checkout $STABLE_COMMIT
-          echo "✓ Builder berhasil dikunci di commit: $STABLE_COMMIT"
+          fetch-depth: 1
 
       - name: Setup Go
         uses: actions/setup-go@v5
@@ -49,7 +42,7 @@ jobs:
           go-version-file: geoip_tool/go.mod
           cache: false
 
-      - name: Copy Local IP Lists
+      - name: Copy Local IP Lists to Builder Engine
         run: |
           set -euo pipefail
           
@@ -83,36 +76,44 @@ jobs:
           set -euo pipefail
           mkdir -p output/dat
 
-          cat << 'EOF' > config.json
-          {
-            "input": [
-              {
-                "type": "plaintext",
-                "action": "add",
-                "args": {
-                  "dir": "."
-                }
-              }
-            ],
-            "output": [
-              {
-                "type": "v2ray",
-                "action": "output",
-                "args": {
-                  "outputName": "geoipok.dat"
-                }
-              }
-            ]
+          # Kita buat file builder.go mandiri yang mengimpor pustaka internal v2fly/geoip secara langsung
+          cat << 'EOF' > builder.go
+          package main
+
+          import (
+          	"log"
+          	"os"
+          	"path/filepath"
+
+          	"github.com/v2fly/geoip/common"
+          	"github.com/v2fly/geoip/input"
+          	"github.com/v2fly/geoip/output"
+          )
+
+          func main() {
+          	// Memuat input file teks secara langsung dari direktori saat ini
+          	in := &input.Text{
+          		InputDirectory: ".",
+          	}
+          	
+          	data, err := in.Get()
+          	if err != nil {
+          		log.Fatalf("Gagal membaca input teks: %v", err)
+          	}
+
+          	outPath := filepath.Join("output", "dat", "geoipok.dat")
+          	err = output.WriteV2RayGeoIP(data, outPath)
+          	if err != nil {
+          		log.Fatalf("Gagal menulis geoipok.dat: %v", err)
+          	}
+
+          	log.Println("➜ Berhasil mengkompilasi geoipok.dat secara mandiri!")
           }
           EOF
 
-          echo "==> Mengompilasi engine v2fly/geoip lawas..."
-          go build -o builder_bin .
-
-          echo "==> Menjalankan kompilasi teks IP ke biner..."
-          ./builder_bin -c config.json
-
-          echo "==> Hasil kompilasi:"
+          # Jalankan skrip builder murni tanpa config.json
+          go mod tidy
+          go run builder.go
           ls -lh output/dat/*.dat
 
       - name: Prepare temp release files
