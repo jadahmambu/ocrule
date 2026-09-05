@@ -90,7 +90,7 @@ jobs:
                 "type": "cidr",
                 "action": "add",
                 "args": {
-                  "inputdir": "."
+                  "dir": "."
                 }
               }
             ],
