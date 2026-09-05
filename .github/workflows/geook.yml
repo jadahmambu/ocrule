@@ -33,59 +33,75 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: v2fly/geoip
-          path: geoip
+          path: geoip_tool
           fetch-depth: 1
 
       - name: Setup Go
         uses: actions/setup-go@v5
         with:
-          go-version-file: geoip/go.mod
+          go-version-file: geoip_tool/go.mod
           cache: false
 
       # =========================================================
-      # PROSES UTAMA: Salin semua file .txt dari folder geoip/ repo
+      # PROSES UTAMA: Cari & salin semua file .txt ke builder engine
       # =========================================================
-      - name: Copy Local IP Lists from /geoip Folder
+      - name: Copy Local IP Lists to Builder Engine
         run: |
           set -euo pipefail
+          
+          SRC_DIR=""
           if [ -d "./geoip" ]; then
-            echo "Memindahkan file .txt dari folder geoip lokal..."
-            cp -f ./geoip/*.txt ./geoip/ 2>/dev/null || true
-            ls -la ./geoip/*.txt
+            SRC_DIR="./geoip"
+          elif [ -d "./ocrule/geoip" ]; then
+            SRC_DIR="./ocrule/geoip"
+          fi
+
+          if [ -n "$SRC_DIR" ]; then
+            echo "Memindahkan file .txt dari $SRC_DIR ke folder kompilasi..."
+            shopt -s nullglob
+            files=($SRC_DIR/*.txt)
+            
+            if [ ${#files[@]} -gt 0 ]; then
+              cp -f "$SRC_DIR"/*.txt ./geoip_tool/
+              echo "File .txt yang berhasil disalin:"
+              ls -la ./geoip_tool/*.txt
+            else
+              echo "Error: Folder $SRC_DIR ditemukan, tetapi tidak ada file .txt di dalamnya!"
+              exit 1
+            fi
           else
-            echo "Error: Folder ./geoip tidak ditemukan!"
+            echo "Error: Folder geoip tidak ditemukan di root maupun di ocrule/geoip!"
             exit 1
           fi
 
       - name: Copy config.json to builder
         run: |
-          cp -f config.json geoip/config.json
+          cp -f config.json geoip_tool/config.json
 
       - name: Build geoip tool
-        working-directory: geoip
+        working-directory: geoip_tool
         run: |
           set -euo pipefail
           go mod download
           go build -o geoip
 
       - name: Validate inputs
-        working-directory: geoip
+        working-directory: geoip_tool
         run: |
           set -euo pipefail
           python3 -c "import json,sys; d=json.load(open('config.json')); sys.exit(0 if ('input' in d and 'output' in d) else 1)"
           count=$(ls -1 *.txt 2>/dev/null | wc -l)
           if [ "$count" -eq 0 ]; then
-            echo "Error: Tidak ada file .txt ditemukan di folder geoip!"
+            echo "Error: Tidak ada file .txt ditemukan di folder kompilasi!"
             exit 1
           fi
 
       - name: Generate geoip artifacts
-        working-directory: geoip
+        working-directory: geoip_tool
         run: |
           set -euo pipefail
           rm -rf output
           ./geoip -c config.json
-          # Jika output builder menghasilkan geoip.dat, ubah namanya menjadi geoipok.dat
           if [ -f output/dat/geoip.dat ]; then
             mv output/dat/geoip.dat output/dat/geoipok.dat
           fi
@@ -94,7 +110,7 @@ jobs:
       - name: Prepare temp release files
         run: |
           mkdir -p /tmp/geoip-release
-          cp geoip/output/dat/geoipok.dat /tmp/geoip-release/geoipok.dat
+          cp geoip_tool/output/dat/geoipok.dat /tmp/geoip-release/geoipok.dat
           sha256sum /tmp/geoip-release/geoipok.dat | awk '{print $1}' > /tmp/geoip-release/geoipok.dat.sha256sum
 
       - name: Publish to release branch
