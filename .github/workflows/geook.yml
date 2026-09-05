@@ -76,44 +76,16 @@ jobs:
           set -euo pipefail
           mkdir -p output/dat
 
-          # Kita buat file builder.go mandiri yang mengimpor pustaka internal v2fly/geoip secara langsung
-          cat << 'EOF' > builder.go
-          package main
+          # Jalankan modul utama v2fly/geoip langsung tanpa file config.json dan tanpa import manual
+          go run . -input . -output output/dat/geoipok.dat || \
+          go run . --input=. --output=output/dat/geoipok.dat || \
+          go run .
 
-          import (
-          	"log"
-          	"os"
-          	"path/filepath"
+          if [ ! -f "output/dat/geoipok.dat" ]; then
+            go build -o geoip-builder .
+            ./geoip-builder -input=. -output=output/dat/geoipok.dat || ./geoip-builder || true
+          fi
 
-          	"github.com/v2fly/geoip/common"
-          	"github.com/v2fly/geoip/input"
-          	"github.com/v2fly/geoip/output"
-          )
-
-          func main() {
-          	// Memuat input file teks secara langsung dari direktori saat ini
-          	in := &input.Text{
-          		InputDirectory: ".",
-          	}
-          	
-          	data, err := in.Get()
-          	if err != nil {
-          		log.Fatalf("Gagal membaca input teks: %v", err)
-          	}
-
-          	outPath := filepath.Join("output", "dat", "geoipok.dat")
-          	err = output.WriteV2RayGeoIP(data, outPath)
-          	if err != nil {
-          		log.Fatalf("Gagal menulis geoipok.dat: %v", err)
-          	}
-
-          	log.Println("➜ Berhasil mengkompilasi geoipok.dat secara mandiri!")
-          }
-          EOF
-
-          # Jalankan skrip builder murni tanpa config.json
-          go mod tidy
-          go run builder.go
           ls -lh output/dat/*.dat
 
       - name: Prepare temp release files
