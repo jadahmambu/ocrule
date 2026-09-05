@@ -71,78 +71,39 @@ jobs:
             exit 1
           fi
 
-      - name: Generate geoipok.dat
+      - name: Build & Run geoip
         working-directory: geoip_tool
         run: |
           set -euo pipefail
-          mkdir -p output/dat
-
-          cat << 'EOF' > main.go
-          package main
-
-          import (
-          	"bufio"
-          	"fmt"
-          	"log"
-          	"os"
-          	"strings"
-
-          	"github.com/v2fly/geoip/output"
-          	"github.com/v2fly/geoip/router"
-          )
-
-          func main() {
-          	files, err := os.ReadDir(".")
-          	if err != nil {
-          		log.Fatalf("Gagal membaca folder: %v", err)
-          	}
-
-          	var geoipList []*router.GeoIP
-
-          	for _, f := range files {
-          		if f.IsDir() || !strings.HasSuffix(f.Name(), ".txt") {
-          			continue
-          		}
-
-          		tagName := strings.ToUpper(strings.TrimSuffix(f.Name(), ".txt"))
-          		file, err := os.Open(f.Name())
-          		if err != nil {
-          			continue
-          		}
-
-          		var cidrs []*router.CIDR
-          		scanner := bufio.NewScanner(file)
-          		for scanner.Scan() {
-          			line := strings.TrimSpace(scanner.Text())
-          			if line == "" || strings.HasPrefix(line, "#") || strings.HasPrefix(line, "!") {
-          				continue
-          			}
-          			cidr, err := router.ParseCIDR(line)
-          			if err == nil {
-          				cidrs = append(cidrs, cidr)
-          			}
-          		}
-          		file.Close()
-
-          		if len(cidrs) > 0 {
-          			geoipList = append(geoipList, &router.GeoIP{
-          				CountryCode: tagName,
-          				Cidr:        cidrs,
-          			})
-          			fmt.Printf("✓ Tag berhasil dibuat: %s (%d CIDR)\n", tagName, len(cidrs))
-          		}
-          	}
-
-          	err = output.WriteV2Ray(geoipList, "output/dat/geoipok.dat")
-          	if err != nil {
-          		log.Fatalf("Gagal membuat geoipok.dat: %v", err)
-          	}
-          	fmt.Println("➜ Berhasil dikompilasi ke output/dat/geoipok.dat")
+          
+          # Buat config.json dinamis yang kompatibel dengan versi v2fly/geoip saat ini
+          cat << 'EOF' > inline_config.json
+          {
+            "input": [
+              {
+                "type": "cidr",
+                "action": "add",
+                "args": {
+                  "inputDir": "."
+                }
+              }
+            ],
+            "output": [
+              {
+                "type": "v2ray",
+                "action": "output",
+                "args": {
+                  "outputName": "geoipok.dat"
+                }
+              }
+            ]
           }
           EOF
 
-          go mod tidy
-          go run main.go
+          # Kompilasi biner generator resmi dari folder root v2fly/geoip
+          go run . -c inline_config.json
+          
+          # Pastikan file biner hasil kompilasi berhasil dibuat
           ls -lh output/dat/*.dat
 
       - name: Prepare temp release files
