@@ -74,6 +74,7 @@ jobs:
           	"strings"
 
           	"github.com/v2fly/v2ray-core/v5/app/router"
+          	"github.com/v2fly/v2ray-core/v5/app/router/routercommon"
           	"google.golang.org/protobuf/proto"
           )
 
@@ -83,7 +84,7 @@ jobs:
           		log.Fatalf("Gagal membaca folder: %v", err)
           	}
 
-          	var geoipList []*router.GeoIP
+          	var geoipList []*routercommon.GeoIP
 
           	for _, f := range files {
           		if f.IsDir() || !strings.HasSuffix(f.Name(), ".txt") {
@@ -96,7 +97,7 @@ jobs:
           			continue
           		}
 
-          		var cidrs []*router.CIDR
+          		var cidrs []*routercommon.CIDR
           		scanner := bufio.NewScanner(file)
           		for scanner.Scan() {
           			line := strings.TrimSpace(scanner.Text())
@@ -119,7 +120,7 @@ jobs:
           			}
 
           			ipBytes := prefix.Addr().AsSlice()
-          			cidrs = append(cidrs, &router.CIDR{
+          			cidrs = append(cidrs, &routercommon.CIDR{
           				Ip:     ipBytes,
           				Prefix: uint32(prefix.Bits()),
           			})
@@ -127,7 +128,7 @@ jobs:
           		file.Close()
 
           		if len(cidrs) > 0 {
-          			geoipList = append(geoipList, &router.GeoIP{
+          			geoipList = append(geoipList, &routercommon.GeoIP{
           				CountryCode: tagName,
           				Cidr:        cidrs,
           			})
