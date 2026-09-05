@@ -76,16 +76,30 @@ jobs:
           set -euo pipefail
           mkdir -p output/dat
 
-          # Jalankan modul utama v2fly/geoip langsung tanpa file config.json dan tanpa import manual
-          go run . -input . -output output/dat/geoipok.dat || \
-          go run . --input=. --output=output/dat/geoipok.dat || \
-          go run .
+          cat << 'EOF' > config.json
+          {
+            "input": [
+              {
+                "type": "text",
+                "action": "add",
+                "args": {
+                  "inputdir": "."
+                }
+              }
+            ],
+            "output": [
+              {
+                "type": "v2ray",
+                "action": "output",
+                "args": {
+                  "outputName": "geoipok.dat"
+                }
+              }
+            ]
+          }
+          EOF
 
-          if [ ! -f "output/dat/geoipok.dat" ]; then
-            go build -o geoip-builder .
-            ./geoip-builder -input=. -output=output/dat/geoipok.dat || ./geoip-builder || true
-          fi
-
+          go run . -c config.json
           ls -lh output/dat/*.dat
 
       - name: Prepare temp release files
