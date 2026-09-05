@@ -34,7 +34,7 @@ jobs:
         with:
           go-version: '1.22'
 
-      - name: Build geoip.dat Independen
+      - name: Build geoipok.dat Independen
         run: |
           set -euo pipefail
           mkdir -p output/dat
@@ -149,12 +149,12 @@ jobs:
           		log.Fatalf("Gagal membuat folder output: %v", err)
           	}
 
-          	err = os.WriteFile("output/dat/geoip.dat", outBytes, 0644)
+          	err = os.WriteFile("output/dat/geoipok.dat", outBytes, 0644)
           	if err != nil {
-          		log.Fatalf("Gagal menulis file geoip.dat: %v", err)
+          		log.Fatalf("Gagal menulis file geoipok.dat: %v", err)
           	}
 
-          	fmt.Println("➜ Berhasil membuat geoip.dat secara mandiri!")
+          	fmt.Println("➜ Berhasil membuat geoipok.dat secara mandiri!")
           }
           EOF
 
@@ -165,8 +165,8 @@ jobs:
       - name: Prepare temp release files
         run: |
           mkdir -p /tmp/geoip-release
-          cp work_dir/output/dat/geoip.dat /tmp/geoip-release/geoip.dat
-          sha256sum /tmp/geoip-release/geoip.dat | awk '{print $1}' > /tmp/geoip-release/geoip.dat.sha256sum
+          cp work_dir/output/dat/geoipok.dat /tmp/geoip-release/geoipok.dat
+          sha256sum /tmp/geoip-release/geoipok.dat | awk '{print $1}' > /tmp/geoip-release/geoipok.dat.sha256sum
 
       - name: Publish to release branch
         run: |
@@ -186,13 +186,13 @@ jobs:
           git rm -rf . >/dev/null 2>&1 || true
           git clean -fdx
 
-          cp /tmp/geoip-release/geoip.dat ./geoip.dat
-          cp /tmp/geoip-release/geoip.dat.sha256sum ./geoip.dat.sha256sum
+          cp /tmp/geoip-release/geoipok.dat ./geoipok.dat
+          cp /tmp/geoip-release/geoipok.dat.sha256sum ./geoipok.dat.sha256sum
 
-          git add geoip.dat geoip.dat.sha256sum
+          git add geoipok.dat geoipok.dat.sha256sum
 
           if ! git diff --staged --quiet; then
-            git commit -m "build: update custom geoip files ($(date +%Y-%m-%d))"
+            git commit -m "build: update custom geoipok files ($(date +%Y-%m-%d))"
             git push origin HEAD:release --force
           else
             echo "File tidak ada perubahan."
@@ -201,12 +201,12 @@ jobs:
       - name: Restore files for GitHub Release
         run: |
           mkdir -p output
-          cp /tmp/geoip-release/geoip.dat output/geoip.dat
-          cp /tmp/geoip-release/geoip.dat.sha256sum output/geoip.dat.sha256sum
+          cp /tmp/geoip-release/geoipok.dat output/geoipok.dat
+          cp /tmp/geoip-release/geoipok.dat.sha256sum output/geoipok.dat.sha256sum
 
       - name: Read SHA256
         id: sha256
-        run: echo "SHA256=$(cat output/geoip.dat.sha256sum)" >> $GITHUB_ENV
+        run: echo "SHA256=$(cat output/geoipok.dat.sha256sum)" >> $GITHUB_ENV
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
@@ -218,8 +218,8 @@ jobs:
             
             SHA256: ${{ env.SHA256 }}
           files: |
-            output/geoip.dat
-            output/geoip.dat.sha256sum
+            output/geoipok.dat
+            output/geoipok.dat.sha256sum
           fail_on_unmatched_files: true
           make_latest: true
           overwrite_files: true
