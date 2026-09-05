@@ -42,43 +42,51 @@ jobs:
           go-version-file: geoip_tool/go.mod
           cache: false
 
-      - name: Copy Local IP Lists to Builder Engine
+      - name: Build & Compile geoipok.dat
         run: |
           set -euo pipefail
           
+          echo "==> 1. Menyiapkan ruang kerja yang terisolasi..."
+          mkdir -p builder_workspace/input
+          mkdir -p builder_workspace/output/dat
+          
+          echo "==> 2. Mencari folder sumber teks IP (.txt)..."
           SRC_DIR=""
           if [ -d "./geoip" ]; then
             SRC_DIR="./geoip"
           elif [ -d "./ocrule/geoip" ]; then
             SRC_DIR="./ocrule/geoip"
           fi
-
-          if [ -n "$SRC_DIR" ]; then
-            echo "Memindahkan file .txt dari $SRC_DIR ke folder kompilasi..."
-            shopt -s nullglob
-            files=($SRC_DIR/*.txt)
-            
-            if [ ${#files[@]} -gt 0 ]; then
-              cp -f "$SRC_DIR"/*.txt ./geoip_tool/
-              echo "File .txt yang berhasil disalin:"
-              ls -la ./geoip_tool/*.txt
-            else
-              echo "Error: Folder $SRC_DIR ditemukan, tetapi tidak ada file .txt di dalamnya!"
-              exit 1
-            fi
-          else
-            echo "Error: Folder geoip tidak ditemukan!"
+          
+          if [ -z "$SRC_DIR" ]; then
+            echo "❌ Error: Folder geoip tidak ditemukan di repositori!"
             exit 1
           fi
-
-      - name: Build & Compile geoipok.dat
-        working-directory: geoip_tool
-        run: |
-          set -euo pipefail
-          mkdir -p output/dat
-
-          # Sisipkan fungsi kustom langsung ke dalam paket main bawaan v2fly/geoip
-          cat << 'EOF' > runner.go
+          
+          shopt -s nullglob
+          files=($SRC_DIR/*.txt)
+          if [ ${#files[@]} -eq 0 ]; then
+            echo "❌ Error: Folder $SRC_DIR ditemukan, tapi kosong (tidak ada file .txt)!"
+            exit 1
+          fi
+          
+          cp -f "$SRC_DIR"/*.txt builder_workspace/input/
+          echo "✓ Berhasil menyalin ${#files[@]} file .txt ke ruang kompilasi."
+          
+          echo "==> 3. Mendeteksi modul Go dari v2fly/geoip secara dinamis..."
+          UPSTREAM_MOD=$(head -n 1 geoip_tool/go.mod | awk '{print $2}')
+          echo "✓ Modul hulu terdeteksi: $UPSTREAM_MOD"
+          
+          cd builder_workspace
+          
+          echo "==> 4. Inisialisasi modul lokal mandiri..."
+          go mod init mybuilder
+          
+          # Baris ini memastikan Go mencari paket V2Ray di folder lokal, bukan mendownload dari internet!
+          go mod edit -replace $UPSTREAM_MOD=../geoip_tool
+          
+          echo "==> 5. Membuat skrip Go kustom anti-gagal..."
+          cat << 'EOF' > main.go
           package main
 
           import (
@@ -90,14 +98,14 @@ jobs:
           	"path/filepath"
           	"strings"
 
-          	"github.com/v2fly/geoip/output"
-          	"github.com/v2fly/geoip/router"
+          	"UPSTREAM_MOD/output"
+          	"UPSTREAM_MOD/router"
           )
 
-          func runCustomBuild() {
-          	files, err := os.ReadDir(".")
+          func main() {
+          	files, err := os.ReadDir("input")
           	if err != nil {
-          		log.Fatalf("Gagal membaca folder: %v", err)
+          		log.Fatalf("Gagal membaca folder input: %v", err)
           	}
 
           	var geoipList []*router.GeoIP
@@ -108,7 +116,7 @@ jobs:
           		}
 
           		tagName := strings.ToUpper(strings.TrimSuffix(f.Name(), ".txt"))
-          		file, err := os.Open(f.Name())
+          		file, err := os.Open(filepath.Join("input", f.Name()))
           		if err != nil {
           			continue
           		}
@@ -148,40 +156,35 @@ jobs:
           				CountryCode: tagName,
           				Cidr:        cidrs,
           			})
-          			fmt.Printf("✓ Tag %s ditambahkan (%d entri IP/CIDR)\n", tagName, len(cidrs))
+          			fmt.Printf("  ✓ Tag %s (%d CIDR)\n", tagName, len(cidrs))
           		}
           	}
 
           	outputPath := filepath.Join("output", "dat", "geoipok.dat")
           	err = output.WriteV2Ray(geoipList, outputPath)
           	if err != nil {
-          		log.Fatalf("Gagal menulis geoipok.dat: %v", err)
+          		log.Fatalf("❌ Gagal menulis geoipok.dat: %v", err)
           	}
 
-          	fmt.Println("➜ Berhasil membuat file output/dat/geoipok.dat")
+          	fmt.Println("➜ Berhasil membuat file output/dat/geoipok.dat!")
           }
           EOF
-
-          # Ganti entry point main() agar langsung mengeksekusi runCustomBuild()
-          cat << 'EOF' > entry.go
-          package main
-
-          func main() {
-          	runCustomBuild()
-          }
-          EOF
-
-          # Hapus file main.go bawaan agar tidak terjadi konflik nama fungsi main
-          rm -f main.go
-
-          # Jalankan kompilasi proyek lokal
-          go run .
+          
+          # Ubah placeholder dengan nama asli modul V2fly hulu
+          sed -i "s|UPSTREAM_MOD|$UPSTREAM_MOD|g" main.go
+          
+          echo "==> 6. Mengunduh dependensi (go mod tidy)..."
+          go mod tidy
+          
+          echo "==> 7. Menjalankan kompilasi..."
+          go run main.go
+          
           ls -lh output/dat/*.dat
 
       - name: Prepare temp release files
         run: |
           mkdir -p /tmp/geoip-release
-          cp geoip_tool/output/dat/geoipok.dat /tmp/geoip-release/geoipok.dat
+          cp builder_workspace/output/dat/geoipok.dat /tmp/geoip-release/geoipok.dat
           sha256sum /tmp/geoip-release/geoipok.dat | awk '{print $1}' > /tmp/geoip-release/geoipok.dat.sha256sum
 
       - name: Publish to release branch
