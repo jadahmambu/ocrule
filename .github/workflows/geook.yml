@@ -34,13 +34,11 @@ jobs:
         with:
           repository: v2fly/geoip
           path: geoip_tool
-          # fetch-depth: 0 sangat penting agar kita bisa mundur ke tahun 2023
           fetch-depth: 0
 
       - name: Rollback Builder ke Versi Stabil (2023)
         run: |
           cd geoip_tool
-          # Kita paksa mundur ke commit bulan November 2023 (versi paling stabil tanpa bug "unknown config")
           STABLE_COMMIT=$(git rev-list -n 1 --before="2023-11-01" HEAD)
           git checkout $STABLE_COMMIT
           echo "✓ Builder berhasil dikunci di commit: $STABLE_COMMIT"
@@ -85,7 +83,6 @@ jobs:
           set -euo pipefail
           mkdir -p output/dat
 
-          # Buat config.json lawas yang 100% didukung oleh versi 2023
           cat << 'EOF' > config.json
           {
             "input": [
@@ -93,7 +90,7 @@ jobs:
                 "type": "text",
                 "action": "add",
                 "args": {
-                  "dir": "."
+                  "inputdir": "."
                 }
               }
             ],
