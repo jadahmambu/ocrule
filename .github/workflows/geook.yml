@@ -1,176 +1,79 @@
-name: Build geoip
-
-on:
-  workflow_dispatch:
-  schedule:
-    - cron: '0 5 */3 * *'
-  push:
-    branches:
-      - main
-    paths-ignore:
-      - "README.md"
-      - ".gitignore"
-      - "LICENSE"
-      - "release/**"
-
-env:
-  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
-
-jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
-
-    steps:
-      - name: Checkout Source Repository
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-          ref: main
-
-      - name: Checkout v2fly/geoip Builder Engine
-        uses: actions/checkout@v4
-        with:
-          repository: v2fly/geoip
-          path: geoip_tool
-          fetch-depth: 1
-
-      - name: Setup Go
-        uses: actions/setup-go@v5
-        with:
-          go-version-file: geoip_tool/go.mod
-          cache: false
-
-      # =========================================================
-      # PROSES UTAMA: Cari & salin semua file .txt ke builder engine
-      # =========================================================
-      - name: Copy Local IP Lists to Builder Engine
+- name: Generate geoip artifacts
+        working-directory: geoip_tool
         run: |
           set -euo pipefail
           
-          SRC_DIR=""
-          if [ -d "./geoip" ]; then
-            SRC_DIR="./geoip"
-          elif [ -d "./ocrule/geoip" ]; then
-            SRC_DIR="./ocrule/geoip"
-          fi
+          # Buat skrip pembaca Go otomatis
+          cat << 'EOF' > compile.go
+          package main
 
-          if [ -n "$SRC_DIR" ]; then
-            echo "Memindahkan file .txt dari $SRC_DIR ke folder kompilasi..."
-            shopt -s nullglob
-            files=($SRC_DIR/*.txt)
-            
-            if [ ${#files[@]} -gt 0 ]; then
-              cp -f "$SRC_DIR"/*.txt ./geoip_tool/
-              echo "File .txt yang berhasil disalin:"
-              ls -la ./geoip_tool/*.txt
-            else
-              echo "Error: Folder $SRC_DIR ditemukan, tetapi tidak ada file .txt di dalamnya!"
-              exit 1
-            fi
-          else
-            echo "Error: Folder geoip tidak ditemukan di root maupun di ocrule/geoip!"
-            exit 1
-          fi
+          import (
+          	"bufio"
+          	"fmt"
+          	"log"
+          	"os"
+          	"path/filepath"
+          	"strings"
 
-      - name: Copy config.json to builder
-        run: |
-          cp -f config.json geoip_tool/config.json
+          	"github.com/v2fly/geoip/output"
+          	"github.com/v2fly/geoip/router"
+          )
 
-      - name: Build geoip tool
-        working-directory: geoip_tool
-        run: |
-          set -euo pipefail
-          go mod download
-          go build -o geoip
+          func main() {
+          	inputDir := "."
+          	outputFile := "./output/dat/geoipok.dat"
 
-      - name: Validate inputs
-        working-directory: geoip_tool
-        run: |
-          set -euo pipefail
-          python3 -c "import json,sys; d=json.load(open('config.json')); sys.exit(0 if ('input' in d and 'output' in d) else 1)"
-          count=$(ls -1 *.txt 2>/dev/null | wc -l)
-          if [ "$count" -eq 0 ]; then
-            echo "Error: Tidak ada file .txt ditemukan di folder kompilasi!"
-            exit 1
-          fi
+          	os.MkdirAll("./output/dat", os.ModePerm)
+          	files, err := os.ReadDir(inputDir)
+          	if err != nil {
+          		log.Fatalf("Gagal membaca folder input: %v", err)
+          	}
 
-      - name: Generate geoip artifacts
-        working-directory: geoip_tool
-        run: |
-          set -euo pipefail
-          rm -rf output
-          ./geoip -c config.json
-          if [ -f output/dat/geoip.dat ]; then
-            mv output/dat/geoip.dat output/dat/geoipok.dat
-          fi
+          	var geoipList []*router.GeoIP
+
+          	for _, f := range files {
+          		if f.IsDir() || !strings.HasSuffix(f.Name(), ".txt") {
+          			continue
+          		}
+
+          		tagName := strings.ToUpper(strings.TrimSuffix(f.Name(), ".txt"))
+          		filePath := filepath.Join(inputDir, f.Name())
+
+          		file, err := os.Open(filePath)
+          		if err != nil {
+          			continue
+          		}
+
+          		var cidrs []*router.CIDR
+          		scanner := bufio.NewScanner(file)
+          		for scanner.Scan() {
+          			line := strings.TrimSpace(scanner.Text())
+          			if line == "" || strings.HasPrefix(line, "#") || strings.HasPrefix(line, "!") {
+          				continue
+          			}
+          			cidr, err := router.ParseCIDR(line)
+          			if err == nil {
+          				cidrs = append(cidrs, cidr)
+          			}
+          		}
+          		file.Close()
+
+          		if len(cidrs) > 0 {
+          			geoipList = append(geoipList, &router.GeoIP{
+          				CountryCode: tagName,
+          				Cidr:        cidrs,
+          			})
+          			fmt.Printf("✓ Ditambahkan tag: %s (%d CIDR)\n", tagName, len(cidrs))
+          		}
+          	}
+
+          	err = output.WriteV2Ray(geoipList, outputFile)
+          	if err != nil {
+          		log.Fatalf("Gagal kompilasi: %v", err)
+          	}
+          	fmt.Println("➜ Berhasil dikompilasi ke geoipok.dat!")
+          }
+          EOF
+
+          go run compile.go
           ls -lh output/dat/*.dat
-
-      - name: Prepare temp release files
-        run: |
-          mkdir -p /tmp/geoip-release
-          cp geoip_tool/output/dat/geoipok.dat /tmp/geoip-release/geoipok.dat
-          sha256sum /tmp/geoip-release/geoipok.dat | awk '{print $1}' > /tmp/geoip-release/geoipok.dat.sha256sum
-
-      - name: Publish to release branch
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-
-          git fetch origin
-
-          if git show-ref --verify --quiet refs/heads/release; then
-            git checkout release
-          elif git show-ref --verify --quiet refs/remotes/origin/release; then
-            git checkout -b release origin/release
-          else
-            git checkout --orphan release
-          fi
-
-          git rm -rf . >/dev/null 2>&1 || true
-          git clean -fdx
-
-          cp /tmp/geoip-release/geoipok.dat ./geoipok.dat
-          cp /tmp/geoip-release/geoipok.dat.sha256sum ./geoipok.dat.sha256sum
-
-          git add geoipok.dat geoipok.dat.sha256sum
-
-          if ! git diff --staged --quiet; then
-            git commit -m "build: update custom geoipok files ($(date +%Y-%m-%d))"
-            git push origin HEAD:release --force
-          else
-            echo "File tidak ada perubahan."
-          fi
-
-      - name: Restore files for GitHub Release
-        run: |
-          mkdir -p output
-          cp /tmp/geoip-release/geoipok.dat output/geoipok.dat
-          cp /tmp/geoip-release/geoipok.dat.sha256sum output/geoipok.dat.sha256sum
-
-      - name: Read SHA256
-        id: sha256
-        run: echo "SHA256=$(cat output/geoipok.dat.sha256sum)" >> $GITHUB_ENV
-
-      - name: Create GitHub Release
-        uses: softprops/action-gh-release@v2
-        with:
-          tag_name: latest
-          name: Custom GeoIP Release Update
-          body: |
-            Automated GeoIP build from local /geoip folder
-            
-            SHA256: ${{ env.SHA256 }}
-          files: |
-            output/geoipok.dat
-            output/geoipok.dat.sha256sum
-          fail_on_unmatched_files: true
-          make_latest: true
-          overwrite_files: true
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Return to main branch
-        run: |
-          git checkout main
