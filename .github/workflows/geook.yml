@@ -87,7 +87,7 @@ jobs:
           {
             "input": [
               {
-                "type": "cidr",
+                "type": "plaintext",
                 "action": "add",
                 "args": {
                   "dir": "."
