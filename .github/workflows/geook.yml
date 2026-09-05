@@ -1,0 +1,160 @@
+name: Build geoip
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 5 */3 * *'
+  push:
+    branches:
+      - main
+    paths-ignore:
+      - "README.md"
+      - ".gitignore"
+      - "LICENSE"
+      - "release/**"
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout Source Repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: main
+
+      - name: Checkout v2fly/geoip Builder Engine
+        uses: actions/checkout@v4
+        with:
+          repository: v2fly/geoip
+          path: geoip
+          fetch-depth: 1
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: geoip/go.mod
+          cache: false
+
+      # =========================================================
+      # PROSES UTAMA: Salin semua file .txt dari folder geoip/ repo
+      # =========================================================
+      - name: Copy Local IP Lists from /geoip Folder
+        run: |
+          set -euo pipefail
+          if [ -d "./geoip" ]; then
+            echo "Memindahkan file .txt dari folder geoip lokal..."
+            cp -f ./geoip/*.txt ./geoip/ 2>/dev/null || true
+            ls -la ./geoip/*.txt
+          else
+            echo "Error: Folder ./geoip tidak ditemukan!"
+            exit 1
+          fi
+
+      - name: Copy config.json to builder
+        run: |
+          cp -f config.json geoip/config.json
+
+      - name: Build geoip tool
+        working-directory: geoip
+        run: |
+          set -euo pipefail
+          go mod download
+          go build -o geoip
+
+      - name: Validate inputs
+        working-directory: geoip
+        run: |
+          set -euo pipefail
+          python3 -c "import json,sys; d=json.load(open('config.json')); sys.exit(0 if ('input' in d and 'output' in d) else 1)"
+          count=$(ls -1 *.txt 2>/dev/null | wc -l)
+          if [ "$count" -eq 0 ]; then
+            echo "Error: Tidak ada file .txt ditemukan di folder geoip!"
+            exit 1
+          fi
+
+      - name: Generate geoip artifacts
+        working-directory: geoip
+        run: |
+          set -euo pipefail
+          rm -rf output
+          ./geoip -c config.json
+          # Jika output builder menghasilkan geoip.dat, ubah namanya menjadi geoipok.dat
+          if [ -f output/dat/geoip.dat ]; then
+            mv output/dat/geoip.dat output/dat/geoipok.dat
+          fi
+          ls -lh output/dat/*.dat
+
+      - name: Prepare temp release files
+        run: |
+          mkdir -p /tmp/geoip-release
+          cp geoip/output/dat/geoipok.dat /tmp/geoip-release/geoipok.dat
+          sha256sum /tmp/geoip-release/geoipok.dat | awk '{print $1}' > /tmp/geoip-release/geoipok.dat.sha256sum
+
+      - name: Publish to release branch
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          git fetch origin
+
+          if git show-ref --verify --quiet refs/heads/release; then
+            git checkout release
+          elif git show-ref --verify --quiet refs/remotes/origin/release; then
+            git checkout -b release origin/release
+          else
+            git checkout --orphan release
+          fi
+
+          git rm -rf . >/dev/null 2>&1 || true
+          git clean -fdx
+
+          cp /tmp/geoip-release/geoipok.dat ./geoipok.dat
+          cp /tmp/geoip-release/geoipok.dat.sha256sum ./geoipok.dat.sha256sum
+
+          git add geoipok.dat geoipok.dat.sha256sum
+
+          if ! git diff --staged --quiet; then
+            git commit -m "build: update custom geoipok files ($(date +%Y-%m-%d))"
+            git push origin HEAD:release --force
+          else
+            echo "File tidak ada perubahan."
+          fi
+
+      - name: Restore files for GitHub Release
+        run: |
+          mkdir -p output
+          cp /tmp/geoip-release/geoipok.dat output/geoipok.dat
+          cp /tmp/geoip-release/geoipok.dat.sha256sum output/geoipok.dat.sha256sum
+
+      - name: Read SHA256
+        id: sha256
+        run: echo "SHA256=$(cat output/geoipok.dat.sha256sum)" >> $GITHUB_ENV
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: latest
+          name: Custom GeoIP Release Update
+          body: |
+            Automated GeoIP build from local /geoip folder
+            
+            SHA256: ${{ env.SHA256 }}
+          files: |
+            output/geoipok.dat
+            output/geoipok.dat.sha256sum
+          fail_on_unmatched_files: true
+          make_latest: true
+          overwrite_files: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Return to main branch
+        run: |
+          git checkout main
