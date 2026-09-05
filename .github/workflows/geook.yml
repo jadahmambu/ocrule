@@ -1,79 +1,14 @@
-- name: Generate geoip artifacts
+- name: Build geoip tool
         working-directory: geoip_tool
         run: |
           set -euo pipefail
-          
-          # Buat skrip pembaca Go otomatis
-          cat << 'EOF' > compile.go
-          package main
+          go mod download
+          go build -o geoip_bin .
 
-          import (
-          	"bufio"
-          	"fmt"
-          	"log"
-          	"os"
-          	"path/filepath"
-          	"strings"
-
-          	"github.com/v2fly/geoip/output"
-          	"github.com/v2fly/geoip/router"
-          )
-
-          func main() {
-          	inputDir := "."
-          	outputFile := "./output/dat/geoipok.dat"
-
-          	os.MkdirAll("./output/dat", os.ModePerm)
-          	files, err := os.ReadDir(inputDir)
-          	if err != nil {
-          		log.Fatalf("Gagal membaca folder input: %v", err)
-          	}
-
-          	var geoipList []*router.GeoIP
-
-          	for _, f := range files {
-          		if f.IsDir() || !strings.HasSuffix(f.Name(), ".txt") {
-          			continue
-          		}
-
-          		tagName := strings.ToUpper(strings.TrimSuffix(f.Name(), ".txt"))
-          		filePath := filepath.Join(inputDir, f.Name())
-
-          		file, err := os.Open(filePath)
-          		if err != nil {
-          			continue
-          		}
-
-          		var cidrs []*router.CIDR
-          		scanner := bufio.NewScanner(file)
-          		for scanner.Scan() {
-          			line := strings.TrimSpace(scanner.Text())
-          			if line == "" || strings.HasPrefix(line, "#") || strings.HasPrefix(line, "!") {
-          				continue
-          			}
-          			cidr, err := router.ParseCIDR(line)
-          			if err == nil {
-          				cidrs = append(cidrs, cidr)
-          			}
-          		}
-          		file.Close()
-
-          		if len(cidrs) > 0 {
-          			geoipList = append(geoipList, &router.GeoIP{
-          				CountryCode: tagName,
-          				Cidr:        cidrs,
-          			})
-          			fmt.Printf("✓ Ditambahkan tag: %s (%d CIDR)\n", tagName, len(cidrs))
-          		}
-          	}
-
-          	err = output.WriteV2Ray(geoipList, outputFile)
-          	if err != nil {
-          		log.Fatalf("Gagal kompilasi: %v", err)
-          	}
-          	fmt.Println("➜ Berhasil dikompilasi ke geoipok.dat!")
-          }
-          EOF
-
-          go run compile.go
+      - name: Generate geoip artifacts
+        working-directory: geoip_tool
+        run: |
+          set -euo pipefail
+          rm -rf output
+          ./geoip_bin -c config.json
           ls -lh output/dat/*.dat
