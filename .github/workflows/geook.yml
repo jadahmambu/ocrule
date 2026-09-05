@@ -141,6 +141,7 @@ jobs:
           }
           EOF
 
+          go mod tidy
           go run main.go
           ls -lh output/dat/*.dat
 
