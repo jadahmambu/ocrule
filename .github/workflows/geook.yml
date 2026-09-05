@@ -77,93 +77,37 @@ jobs:
           set -euo pipefail
           mkdir -p output/dat
 
-          cat << 'EOF' > compile_geoip.go
-          package main
-
-          import (
-          	"bufio"
-          	"fmt"
-          	"log"
-          	"net/netip"
-          	"os"
-          	"path/filepath"
-          	"strings"
-
-          	"github.com/v2fly/geoip/output"
-          	"github.com/v2fly/geoip/router"
-          )
-
-          func main() {
-          	files, err := os.ReadDir(".")
-          	if err != nil {
-          		log.Fatalf("Gagal membaca direktori: %v", err)
-          	}
-
-          	var geoipList []*router.GeoIP
-
-          	for _, f := range files {
-          		if f.IsDir() || !strings.HasSuffix(f.Name(), ".txt") {
-          			continue
-          		}
-
-          		tagName := strings.ToUpper(strings.TrimSuffix(f.Name(), ".txt"))
-          		file, err := os.Open(f.Name())
-          		if err != nil {
-          			continue
-          		}
-
-          		var cidrs []*router.CIDR
-          		scanner := bufio.NewScanner(file)
-          		for scanner.Scan() {
-          			line := strings.TrimSpace(scanner.Text())
-          			if line == "" || strings.HasPrefix(line, "#") || strings.HasPrefix(line, "//") || strings.HasPrefix(line, "!") {
-          				continue
-          			}
-
-          			// Parse CIDR IP
-          			prefix, err := netip.ParsePrefix(line)
-          			if err != nil {
-          				// Jika baris berisi IP tunggal tanpa subnet mask (contoh: 1.1.1.1)
-          				addr, err := netip.ParseAddr(line)
-          				if err == nil {
-          					bits := 32
-          					if addr.Is6() {
-          						bits = 128
-          					}
-          					prefix = netip.PrefixFrom(addr, bits)
-          				} else {
-          					continue
-          				}
-          			}
-
-          			ipBytes := prefix.Addr().AsSlice()
-          			cidrs = append(cidrs, &router.CIDR{
-          				Ip:     ipBytes,
-          				Prefix: uint32(prefix.Bits()),
-          			})
-          		}
-          		file.Close()
-
-          		if len(cidrs) > 0 {
-          			geoipList = append(geoipList, &router.GeoIP{
-          				CountryCode: tagName,
-          				Cidr:        cidrs,
-          			})
-          			fmt.Printf("✓ Tag %s ditambahkan (%d entri IP/CIDR)\n", tagName, len(cidrs))
-          		}
-          	}
-
-          	outputPath := filepath.Join("output", "dat", "geoipok.dat")
-          	err = output.WriteV2Ray(geoipList, outputPath)
-          	if err != nil {
-          		log.Fatalf("Gagal menulis file geoipok.dat: %v", err)
-          	}
-
-          	fmt.Println("➜ Berhasil membuat file output/dat/geoipok.dat")
+          # 1. Buat config.json yang sesuai dengan skema terbaru v2fly/geoip
+          cat << 'EOF' > config.json
+          {
+            "input": [
+              {
+                "type": "text",
+                "action": "add",
+                "args": {
+                  "inputDir": "."
+                }
+              }
+            ],
+            "output": [
+              {
+                "type": "v2ray",
+                "action": "output",
+                "args": {
+                  "outputName": "geoipok.dat"
+                }
+              }
+            ]
           }
           EOF
 
-          go run compile_geoip.go
+          # 2. Compile biner builder resmi dari source v2fly/geoip lokal
+          go build -o builder .
+
+          # 3. Jalankan builder
+          ./builder -c config.json
+
+          # 4. Verifikasi hasil
           ls -lh output/dat/*.dat
 
       - name: Prepare temp release files
