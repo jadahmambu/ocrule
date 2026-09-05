@@ -1,0 +1,76 @@
+name: Copy Text Rules
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 0 * * *'
+  push:
+    branches:
+      - main
+      - master
+    paths-ignore:
+      - "**/README.md"
+
+permissions:
+  contents: write
+
+jobs:
+  copy-text:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Create geoip directory
+        run: |
+          mkdir -p geoip
+
+      - name: Download and Process Text Lists
+        run: |
+          set -euo pipefail
+
+          # Download IP Indonesia (ID)
+          curl -fsSL https://raw.githubusercontent.com/Loyalsoldier/geoip/release/text/id.txt -o ./geoip/id.txt || true
+
+          # Download IP Facebook
+          curl -fsSL https://raw.githubusercontent.com/Loyalsoldier/geoip/release/text/facebook.txt -o ./geoip/facebook.txt || true
+
+          # Download IP Telegram
+          curl -fsSL https://raw.githubusercontent.com/Loyalsoldier/geoip/release/text/telegram.txt -o ./geoip/telegram.txt || true
+
+          # Download IP Twitter
+          curl -fsSL https://raw.githubusercontent.com/Loyalsoldier/geoip/release/text/twitter.txt -o ./geoip/twitter.txt || true
+
+          # Download IP Google
+          curl -fsSL https://raw.githubusercontent.com/Loyalsoldier/geoip/release/text/google.txt -o ./geoip/google.txt || true
+
+          # Download IP Netflix
+          curl -fsSL https://raw.githubusercontent.com/Loyalsoldier/geoip/release/text/netflix.txt -o ./geoip/netflix.txt || true
+
+          # Download IP Cloudflare
+          curl -fsSL https://raw.githubusercontent.com/Loyalsoldier/geoip/release/text/cloudflare.txt -o ./geoip/cloudflare.txt || true
+
+          # Download IP Private
+          curl -fsSL https://raw.githubusercontent.com/Loyalsoldier/geoip/release/text/private.txt -o ./geoip/private.txt || true
+
+      - name: Clean up & format CIDR
+        run: |
+          for file in ./geoip/*.txt; do
+            if [ -f "$file" ]; then
+              sed -i 's/\r//g' "$file"
+              sed -i '/^#/d; /^!/d; /^$/d' "$file"
+              sort -u "$file" -o "$file"
+            fi
+          done
+
+      - name: Commit and Push Changes
+        run: |
+          git config --local user.name "github-actions[bot]"
+          git config --local user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add ./geoip/*.txt
+          if ! git diff --staged --quiet; then
+            git commit -m "update: sync text ip lists [$(date +'%Y-%m-%d')]"
+            git push
+          else
+            echo "Tidak ada perubahan file teks."
+          fi
