@@ -100,7 +100,7 @@ jobs:
               sed 's/\r//g' "./adsblock.txt" | awk '!/^#/ && NF { gsub(/^[a-zA-Z0-9_-]+:/, ""); if (length($0) > 0) print $0 }' >> ./community/data/rule-ads
           fi
 
-          # 2. SCAN SEMUA FILE .TXT LAINNYA DI REPO MENJADI TAG GEOSITE OTOMATIS
+          # 2. SCAN SEMUA FILE .TXT, UBAH KE LOWERCASE OTOMATIS MENJADI TAG GEOSITE
           for filepath in ./*.txt; do
               [ -e "$filepath" ] || continue
               filename=$(basename "$filepath")
@@ -109,7 +109,8 @@ jobs:
                   continue
               fi
               
-              tagname="${filename%.txt}"
+              # Hilangkan ekstensi .txt, ubah huruf besar jadi kecil, dan ubah underscore (_) jadi dash (-)
+              tagname=$(echo "${filename%.txt}" | tr '[:upper:]' '[:lower:]' | tr '_' '-')
               echo "⚙️ Memproses file $filename -> Tag Geosite: $tagname"
               
               sed 's/\r//g' "$filepath" | awk '
