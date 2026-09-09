@@ -1,0 +1,50 @@
+# === STEAM & VALVE ===
+steampowered.com
+steamcommunity.com
+steamstatic.com
+steamcontent.com
+steamgames.com
+steam-chat.com
+valvesoftware.com
+
+# === EPIC GAMES ===
+epicgames.com
+epicgames.dev
+unrealengine.com
+easyanticheat.net
+
+# === RIOT GAMES (Valorant, LoL) ===
+riotgames.com
+leagueoflegends.com
+playvalorant.com
+pvp.net
+
+# === PLAYSTATION / SONY ===
+playstation.com
+playstation.net
+sonyentertainmentnetwork.com
+psnetwork.com
+
+# === XBOX / MICROSOFT GAMING ===
+xbox.com
+xboxlive.com
+xbox.net
+minecraft.net
+mojang.com
+
+# === UBISOFT & EA ===
+ubisoft.com
+ea.com
+origin.com
+
+# === BLIZZARD / BATTLE.NET ===
+blizzard.com
+battle.net
+
+# === ROBANX / MOBILE & POPULAR GAMES ===
+roblox.com
+supercell.com
+mihoyo.com
+hoyoverse.com
+garena.com
+pubg.com
