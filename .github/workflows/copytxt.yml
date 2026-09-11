@@ -75,10 +75,10 @@ jobs:
           wget -qO "./geoip/cloudflare.txt" "https://raw.githubusercontent.com/Loyalsoldier/geoip/text/cloudflare.txt" || true
           wget -qO "./geoip/cloudfront.txt" "https://raw.githubusercontent.com/Loyalsoldier/geoip/text/cloudfront.txt" || true
           wget -qO "./geoip/fastly.txt" "https://raw.githubusercontent.com/Loyalsoldier/geoip/text/fastly.txt" || true
-          wget -qO "./geoip/amazon.txt" "https://raw.githubusercontent.com/Loyalsoldier/geoip/text/amazon.txt" || true
           wget -qO "./geoip/microsoft.txt" "https://raw.githubusercontent.com/Loyalsoldier/geoip/text/microsoft.txt" || true
           wget -qO "./geoip/apple.txt" "https://raw.githubusercontent.com/Loyalsoldier/geoip/text/apple.txt" || true
           wget -qO "./geoip/private.txt" "https://raw.githubusercontent.com/Loyalsoldier/geoip/text/private.txt" || true
+          rm -f ./geoip/amazon.txt
           ls -lh ./geoip/
 
       - name: Create Geosite Lists Automatically
