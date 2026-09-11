@@ -24,7 +24,7 @@ jobs:
       - name: Setup Go
         uses: actions/setup-go@v5
         with:
-          go-version: '1.22'
+          go-version: '1.26'
 
       - name: Set timezone to WIB Jakarta
         run: |
@@ -180,8 +180,11 @@ jobs:
       - name: Build geoip.dat
         run: |
           go install github.com/v2fly/geoip@latest
-          $(go env GOPATH)/bin/geoip --datapath=./geoip_src/data
-          if [ -f "./geoip.dat" ]; then
+          mkdir -p ./geoip_output
+          $(go env GOPATH)/bin/geoip --input ./geoip_src/data --output ./geoip_output/geoip.dat
+          if [ -f "./geoip_output/geoip.dat" ]; then
+              mv ./geoip_output/geoip.dat ./publish/geoip.dat
+          elif [ -f "./geoip.dat" ]; then
               mv ./geoip.dat ./publish/geoip.dat
           elif [ -f "./dat" ]; then
               mv ./dat ./publish/geoip.dat
