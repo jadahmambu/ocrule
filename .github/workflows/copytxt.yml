@@ -78,7 +78,6 @@ jobs:
           wget -qO "./geoip/microsoft.txt" "https://raw.githubusercontent.com/Loyalsoldier/geoip/text/microsoft.txt" || true
           wget -qO "./geoip/apple.txt" "https://raw.githubusercontent.com/Loyalsoldier/geoip/text/apple.txt" || true
           wget -qO "./geoip/private.txt" "https://raw.githubusercontent.com/Loyalsoldier/geoip/text/private.txt" || true
-          rm -f ./geoip/amazon.txt
           ls -lh ./geoip/
 
       - name: Create Geosite Lists Automatically
@@ -188,7 +187,7 @@ jobs:
                         gsub(/^[ \t]*-?[ \t]*/, "");
                         sub(/^ip-cidr,/, "");
                         sub(/^ip-cidr6,/, "");
-                        if ($0 ~ /^[0-9a-fA-F.:\/]+$/) print $0;
+                        if ($0 ~ /[0-9]/ && $0 ~ /^[0-9a-fA-F.:\/]+$/) print $0;
                     }
                 ' > "./geoip_build/data/$tagname"
             done
