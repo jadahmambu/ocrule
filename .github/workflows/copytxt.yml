@@ -180,7 +180,6 @@ jobs:
                 has_files=true
                 filename=$(basename "$filepath")
                 
-                # Memastikan nama tag file menjadi huruf kecil (lowercase) agar aman
                 tagname=$(echo "${filename%.txt}" | tr '[:upper:]' '[:lower:]' | tr '_' '-')
                 echo "⚙️ Memproses GeoIP file $filename -> Tag: $tagname"
                 
@@ -189,7 +188,7 @@ jobs:
                         gsub(/^[ \t]*-?[ \t]*/, "");
                         sub(/^ip-cidr,/, "");
                         sub(/^ip-cidr6,/, "");
-                        print $0;
+                        if ($0 ~ /^[0-9a-fA-F.:\/]+$/) print $0;
                     }
                 ' > "./geoip_build/data/$tagname"
             done
