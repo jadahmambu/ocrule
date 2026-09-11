@@ -130,7 +130,6 @@ jobs:
       # -------------------------------------------------------------
       - name: Create GeoIP Config and Lists
         run: |
-          # Buat kerangka awal config.json untuk v2fly/geoip
           echo '{"input": [], "output": {"out": "geoip.dat", "format": "v2ray"}}' > geoip_build/config.json
 
           has_files=false
@@ -140,7 +139,6 @@ jobs:
                 has_files=true
                 filename=$(basename "$filepath")
                 
-                # Nama file otomatis jadi tag (huruf kecil & dash)
                 tagname=$(echo "${filename%.txt}" | tr '[:upper:]' '[:lower:]' | tr '_' '-')
                 echo "⚙️ Memproses GeoIP file $filename -> Tag: $tagname"
                 
@@ -155,13 +153,10 @@ jobs:
             done
           fi
 
-          # Jika folder geoip kosong, buat input dummy agar tidak error
           if [ "$has_files" = false ]; then
               echo "1.0.0.0/8" > ./geoip_build/data/private
-              tagname="private"
           fi
 
-          # Generate isi "input" di config.json secara otomatis berdasarkan file yang ada di folder data
           cd geoip_build
           python3 -c '
           import os, json
@@ -174,7 +169,8 @@ jobs:
                   data["input"].append({
                       "name": f_name,
                       "type": "text",
-                      "path": f"data/{f_name}"
+                      "path": f"data/{f_name}",
+                      "action": "add"
                   })
           
           with open(config_path, "w") as f:
