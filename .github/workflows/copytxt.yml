@@ -200,12 +200,13 @@ jobs:
           '
           cd ..
 
-      - name: Build geoip.dat using v2fly/geoip
+      - name: Build geoip.dat using v2fly/geoip source
         run: |
-          # Menggunakan versi stabil v0.5.2 agar parser teks kompatibel
-          go install github.com/v2fly/geoip@v0.5.2
+          git clone https://github.com/v2fly/geoip.git temp_geoip_source
           cd geoip_build
-          $(go env GOPATH)/bin/geoip -c config.json
+          go mod init custombuild || true
+          go mod tidy || true
+          go run ../temp_geoip_source/main.go -c config.json
           cd ..
           
           if [ -f "./geoip_build/geoip.dat" ]; then
