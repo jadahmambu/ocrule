@@ -44,7 +44,7 @@ jobs:
 
       - name: Prepare Directories
         run: |
-          rm -rf community geoip geoip_build publish
+          rm -rf community geoip geoip_build publish temp_geoip_source
           mkdir -p community/data geoip geoip_build/data publish
 
       - name: Download GeoIP Lists (Stable Countries Only)
@@ -203,16 +203,17 @@ jobs:
       - name: Build geoip.dat using v2fly/geoip source
         run: |
           git clone https://github.com/v2fly/geoip.git temp_geoip_source
-          cd geoip_build
-          go mod init custombuild || true
-          go mod tidy || true
-          go run ../temp_geoip_source/main.go -c config.json
+          cd temp_geoip_source
+          go mod tidy
+          go run main.go -c ../geoip_build/config.json
           cd ..
           
           if [ -f "./geoip_build/geoip.dat" ]; then
               mv ./geoip_build/geoip.dat ./publish/geoip.dat
           elif [ -f "./geoip_build/dat" ]; then
               mv ./geoip_build/dat ./publish/geoip.dat
+          elif [ -f "./temp_geoip_source/geoip.dat" ]; then
+              mv ./temp_geoip_source/geoip.dat ./publish/geoip.dat
           fi
 
       - name: Validate Output Files
