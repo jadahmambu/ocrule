@@ -47,9 +47,9 @@ jobs:
           rm -rf community geoip geoip_build publish
           mkdir -p community/data geoip geoip_build/data publish
 
-      - name: Download GeoIP Lists (Part 1 - Countries & Regions)
+      - name: Download GeoIP Lists (Countries & Private Only)
         run: |
-          echo "📥 Mengunduh GeoIP bagian 1 (Negara)..."
+          echo "📥 Mengunduh GeoIP daftar negara & private..."
           wget -qO "./geoip/cn.txt" "https://raw.githubusercontent.com/Loyalsoldier/geoip/text/cn.txt" || true
           wget -qO "./geoip/id.txt" "https://raw.githubusercontent.com/Loyalsoldier/geoip/text/id.txt" || true
           wget -qO "./geoip/sg.txt" "https://raw.githubusercontent.com/Loyalsoldier/geoip/text/sg.txt" || true
@@ -57,26 +57,6 @@ jobs:
           wget -qO "./geoip/my.txt" "https://raw.githubusercontent.com/Loyalsoldier/geoip/text/my.txt" || true
           wget -qO "./geoip/hk.txt" "https://raw.githubusercontent.com/Loyalsoldier/geoip/text/hk.txt" || true
           wget -qO "./geoip/jp.txt" "https://raw.githubusercontent.com/Loyalsoldier/geoip/text/jp.txt" || true
-
-      - name: Download GeoIP Lists (Part 2 - Services & Social Media)
-        run: |
-          echo "📥 Mengunduh GeoIP bagian 2 (Layanan & Sosmed)..."
-          wget -qO "./geoip/telegram.txt" "https://raw.githubusercontent.com/Loyalsoldier/geoip/text/telegram.txt" || true
-          wget -qO "./geoip/google.txt" "https://raw.githubusercontent.com/Loyalsoldier/geoip/text/google.txt" || true
-          wget -qO "./geoip/netflix.txt" "https://raw.githubusercontent.com/Loyalsoldier/geoip/text/netflix.txt" || true
-          wget -qO "./geoip/tiktok.txt" "https://raw.githubusercontent.com/Loyalsoldier/geoip/text/tiktok.txt" || true
-          wget -qO "./geoip/meta.txt" "https://raw.githubusercontent.com/Loyalsoldier/geoip/text/meta.txt" || true
-          wget -qO "./geoip/twitter.txt" "https://raw.githubusercontent.com/Loyalsoldier/geoip/text/twitter.txt" || true
-          wget -qO "./geoip/discord.txt" "https://raw.githubusercontent.com/Loyalsoldier/geoip/text/discord.txt" || true
-
-      - name: Download GeoIP Lists (Part 3 - Infrastructure & CDN)
-        run: |
-          echo "📥 Mengunduh GeoIP bagian 3 (Infrastruktur & CDN)..."
-          wget -qO "./geoip/cloudflare.txt" "https://raw.githubusercontent.com/Loyalsoldier/geoip/text/cloudflare.txt" || true
-          wget -qO "./geoip/cloudfront.txt" "https://raw.githubusercontent.com/Loyalsoldier/geoip/text/cloudfront.txt" || true
-          wget -qO "./geoip/fastly.txt" "https://raw.githubusercontent.com/Loyalsoldier/geoip/text/fastly.txt" || true
-          wget -qO "./geoip/microsoft.txt" "https://raw.githubusercontent.com/Loyalsoldier/geoip/text/microsoft.txt" || true
-          wget -qO "./geoip/apple.txt" "https://raw.githubusercontent.com/Loyalsoldier/geoip/text/apple.txt" || true
           wget -qO "./geoip/private.txt" "https://raw.githubusercontent.com/Loyalsoldier/geoip/text/private.txt" || true
           ls -lh ./geoip/
 
