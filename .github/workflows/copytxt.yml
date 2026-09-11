@@ -44,13 +44,12 @@ jobs:
 
       - name: Prepare Directories
         run: |
-          rm -rf community geoip geoip_src publish
-          mkdir -p community/data geoip geoip_src/data publish
+          rm -rf community geoip geoip_src publish geoip_output
+          mkdir -p community/data geoip geoip_src/data publish geoip_output
 
       - name: Download GeoIP Lists (Part 1 - Countries & Regions)
         run: |
           echo "📥 Mengunduh GeoIP bagian 1 (Negara)..."
-          mkdir -p ./geoip
           wget -qO "./geoip/id.txt" "https://raw.githubusercontent.com/Loyalsoldier/geoip/text/id.txt" || true
           wget -qO "./geoip/sg.txt" "https://raw.githubusercontent.com/Loyalsoldier/geoip/text/sg.txt" || true
           wget -qO "./geoip/us.txt" "https://raw.githubusercontent.com/Loyalsoldier/geoip/text/us.txt" || true
@@ -180,15 +179,32 @@ jobs:
       - name: Build geoip.dat
         run: |
           go install github.com/v2fly/geoip@latest
-          mkdir -p ./geoip_output
-          $(go env GOPATH)/bin/geoip --input ./geoip_src/data --output ./geoip_output/geoip.dat
-          if [ -f "./geoip_output/geoip.dat" ]; then
-              mv ./geoip_output/geoip.dat ./publish/geoip.dat
-          elif [ -f "./geoip.dat" ]; then
-              mv ./geoip.dat ./publish/geoip.dat
-          elif [ -f "./dat" ]; then
-              mv ./dat ./publish/geoip.dat
-          fi
+          
+          cat << 'EOF' > config.json
+          {
+            "input": [
+              {
+                "type": "text",
+                "action": "add",
+                "args": {
+                  "uri": "./geoip_src/data"
+                }
+              }
+            ],
+            "output": [
+              {
+                "type": "v2rayGeoIPDat",
+                "action": "output",
+                "args": {
+                  "outputDir": "./publish",
+                  "outputName": "geoip.dat"
+                }
+              }
+            ]
+          }
+          EOF
+          
+          $(go env GOPATH)/bin/geoip -c config.json
 
       - name: Validate Output Files
         run: |
