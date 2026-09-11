@@ -133,24 +133,8 @@ jobs:
           $(go env GOPATH)/bin/domain-list-community --datapath=./community/data
           mv ./dlc.dat ./publish/geosite.dat
 
-      - name: Create GeoIP Config and Lists
+      - name: Create GeoIP Lists
         run: |
-          cat << 'EOF' > geoip_build/config.json
-          {
-            "input": [],
-            "output": [
-              {
-                "type": "v2rayGeoIPDat",
-                "action": "output",
-                "args": {
-                  "outputDir": ".",
-                  "outputName": "geoip.dat"
-                }
-              }
-            ]
-          }
-          EOF
-          
           has_files=false
           if [ -d "./geoip" ]; then
             for filepath in ./geoip/*.txt; do
@@ -172,49 +156,18 @@ jobs:
             done
           fi
           
-          if [ ! "$(ls -A ./geoip_build/data)" ]; then
+          if [ "$has_files" = false ]; then
               echo "1.0.0.0/8" > ./geoip_build/data/private
           fi
-          
-          cd geoip_build
-          python3 -c '
-          import os, json
-          config_path = "config.json"
-          with open(config_path, "r") as f:
-              data = json.load(f)
-          
-          for f_name in sorted(os.listdir("data")):
-              f_path = os.path.join("data", f_name)
-              if os.path.isfile(f_path):
-                  data["input"].append({
-                      "type": "text",
-                      "action": "add",
-                      "args": {
-                          "name": f_name,
-                          "uri": f"./data/{f_name}"
-                      }
-                  })
-          
-          with open(config_path, "w") as f:
-              json.dump(data, f, indent=2)
-          '
-          cd ..
 
       - name: Build geoip.dat using v2fly/geoip source
         run: |
           git clone https://github.com/v2fly/geoip.git temp_geoip_source
           cd temp_geoip_source
           go mod tidy
-          go run main.go -c ../geoip_build/config.json
+          # Menjalankan go run dengan argumen folder input text secara langsung
+          go run main.go --datapath=../geoip_build/data --output=../publish/geoip.dat
           cd ..
-          
-          if [ -f "./geoip_build/geoip.dat" ]; then
-              mv ./geoip_build/geoip.dat ./publish/geoip.dat
-          elif [ -f "./geoip_build/dat" ]; then
-              mv ./geoip_build/dat ./publish/geoip.dat
-          elif [ -f "./temp_geoip_source/geoip.dat" ]; then
-              mv ./temp_geoip_source/geoip.dat ./publish/geoip.dat
-          fi
 
       - name: Validate Output Files
         run: |
