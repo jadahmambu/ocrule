@@ -45,8 +45,8 @@ jobs:
 
       - name: Prepare Directories
         run: |
-          rm -rf community geoip_src publish
-          mkdir -p community/data geoip_src/data publish
+          rm -rf community geoip_build publish
+          mkdir -p community/data geoip_build/data publish
 
       # -------------------------------------------------------------
       # 1. BUILD GEOSITE AUTOMATIC (Dari file .txt di root repo)
@@ -126,16 +126,21 @@ jobs:
           mv ./dlc.dat ./publish/geosite.dat
 
       # -------------------------------------------------------------
-      # 2. BUILD GEOIP OTOMATIS (Dari folder ./geoip/*.txt milikmu)
+      # 2. BUILD GEOIP DARI FOLDER ./geoip/*.txt DENGAN CONFIG.JSON
       # -------------------------------------------------------------
-      - name: Create GeoIP Lists Automatically
+      - name: Create GeoIP Config and Lists
         run: |
+          # Buat kerangka awal config.json untuk v2fly/geoip
+          echo '{"input": [], "output": {"out": "geoip.dat", "format": "v2ray"}}' > geoip_build/config.json
+
+          has_files=false
           if [ -d "./geoip" ]; then
             for filepath in ./geoip/*.txt; do
                 [ -e "$filepath" ] || continue
+                has_files=true
                 filename=$(basename "$filepath")
                 
-                # Nama file .txt otomatis jadi tag GeoIP (lowercase & dash)
+                # Nama file otomatis jadi tag (huruf kecil & dash)
                 tagname=$(echo "${filename%.txt}" | tr '[:upper:]' '[:lower:]' | tr '_' '-')
                 echo "⚙️ Memproses GeoIP file $filename -> Tag: $tagname"
                 
@@ -146,32 +151,49 @@ jobs:
                         sub(/^IP-CIDR6,/, "");
                         print $0;
                     }
-                ' > "./geoip_src/data/$tagname"
+                ' > "./geoip_build/data/$tagname"
             done
           fi
-          
-          # Buat file dummy jika folder geoip kosong agar compiler tidak error
-          if [ ! "$(ls -A ./geoip_src/data)" ]; then
-              echo "1.0.0.0/8" > ./geoip_src/data/private
+
+          # Jika folder geoip kosong, buat input dummy agar tidak error
+          if [ "$has_files" = false ]; then
+              echo "1.0.0.0/8" > ./geoip_build/data/private
+              tagname="private"
           fi
+
+          # Generate isi "input" di config.json secara otomatis berdasarkan file yang ada di folder data
+          cd geoip_build
+          python3 -c '
+          import os, json
+          config_path = "config.json"
+          with open(config_path, "r") as f:
+              data = json.load(f)
+          
+          for f_name in sorted(os.listdir("data")):
+              if os.path.isfile(os.path.join("data", f_name)):
+                  data["input"].append({
+                      "name": f_name,
+                      "type": "text",
+                      "path": f"data/{f_name}"
+                  })
+          
+          with open(config_path, "w") as f:
+              json.dump(data, f, indent=2)
+          '
+          cd ..
 
       - name: Build geoip.dat using v2fly/geoip
         run: |
-          go install github.com/v2fly/geoip/v6@latest || go install github.com/v2fly/geoip@latest
+          go install github.com/v2fly/geoip@latest
+          cd geoip_build
+          $(go env GOPATH)/bin/geoip -c config.json
+          cd ..
           
-          # Gunakan perintah direct datapath untuk versi compiler tertentu
-          if [ -d "./geoip_src/data" ]; then
-              $(go env GOPATH)/bin/geoip --datapath=./geoip_src/data || $(go env GOPATH)/bin/geoip -datapath=./geoip_src/data || true
+          if [ -f "./geoip_build/geoip.dat" ]; then
+              mv ./geoip_build/geoip.dat ./publish/geoip.dat
+          elif [ -f "./geoip_build/dat" ]; then
+              mv ./geoip_build/dat ./publish/geoip.dat
           fi
-          
-          # Cari file hasil build geoip.dat di seluruh direktori
-          find . -name "geoip.dat" -o -name "dat" | while read -r found; do
-              if [ "$found" != "./publish/geoip.dat" ]; then
-                  cp "$found" ./publish/geoip.dat
-                  echo "Ditemukan file geoip di: $found"
-                  break
-              fi
-          done
 
       - name: Validate Output Files
         run: |
