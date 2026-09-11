@@ -24,7 +24,7 @@ jobs:
       - name: Setup Go
         uses: actions/setup-go@v5
         with:
-          go-version: '1.26'
+          go-version: '1.22'
 
       - name: Set timezone to WIB Jakarta
         run: |
@@ -36,6 +36,7 @@ jobs:
           echo "RELEASE_NAME=Released on $(date +'%Y-%m-%d %H:%M WIB')" >> $GITHUB_ENV
           echo "TAG_NAME=latest" >> $GITHUB_ENV
           
+          # Sumber Blokir Utama Eksternal
           echo "ADGUARD_DNS=https://adguardteam.github.io/AdGuardSDNSFilter/Filters/filter.txt" >> $GITHUB_ENV
           echo "STEVENBLACK_PORN=https://raw.githubusercontent.com/StevenBlack/hosts/master/alternates/porn-only/hosts" >> $GITHUB_ENV
           echo "ANTISCAM_JARELL=https://raw.githubusercontent.com/jarelllama/Scam-Blocklist/main/lists/wildcard_domains/scams_light.txt" >> $GITHUB_ENV
@@ -44,21 +45,24 @@ jobs:
 
       - name: Prepare Directories
         run: |
-          rm -rf community geoip geoip_build publish temp_geoip_source
+          rm -rf community geoip geoip_build publish
           mkdir -p community/data geoip geoip_build/data publish
 
-      - name: Download GeoIP Lists (Stable Countries Only)
+      - name: Download GeoIP Lists (Stable Countries & Regions)
         run: |
-          echo "📥 Mengunduh GeoIP daftar negara yang stabil..."
+          echo "📥 Mengunduh GeoIP daftar negara..."
+          wget -qO "./geoip/cn.txt" "https://raw.githubusercontent.com/Loyalsoldier/geoip/text/cn.txt" || true
           wget -qO "./geoip/id.txt" "https://raw.githubusercontent.com/Loyalsoldier/geoip/text/id.txt" || true
           wget -qO "./geoip/sg.txt" "https://raw.githubusercontent.com/Loyalsoldier/geoip/text/sg.txt" || true
           wget -qO "./geoip/us.txt" "https://raw.githubusercontent.com/Loyalsoldier/geoip/text/us.txt" || true
           wget -qO "./geoip/my.txt" "https://raw.githubusercontent.com/Loyalsoldier/geoip/text/my.txt" || true
           wget -qO "./geoip/hk.txt" "https://raw.githubusercontent.com/Loyalsoldier/geoip/text/hk.txt" || true
           wget -qO "./geoip/jp.txt" "https://raw.githubusercontent.com/Loyalsoldier/geoip/text/jp.txt" || true
-          wget -qO "./geoip/private.txt" "https://raw.githubusercontent.com/Loyalsoldier/geoip/text/private.txt" || true
           ls -lh ./geoip/
 
+      # -------------------------------------------------------------
+      # 1. BUILD GEOSITE AUTOMATIC (Dari file .txt di root repo)
+      # -------------------------------------------------------------
       - name: Create Geosite Lists Automatically
         run: |
           > ./community/data/rule-ads
@@ -133,8 +137,27 @@ jobs:
           $(go env GOPATH)/bin/domain-list-community --datapath=./community/data
           mv ./dlc.dat ./publish/geosite.dat
 
-      - name: Create GeoIP Lists
+      # -------------------------------------------------------------
+      # 2. BUILD GEOIP DARI FOLDER ./geoip/*.txt DENGAN FORMAT CONFIG JSON RESMI
+      # -------------------------------------------------------------
+      - name: Create GeoIP Config and Lists
         run: |
+          cat << 'EOF' > geoip_build/config.json
+          {
+            "input": [],
+            "output": [
+              {
+                "type": "v2rayGeoIPDat",
+                "action": "output",
+                "args": {
+                  "outputDir": ".",
+                  "outputName": "geoip.dat"
+                }
+              }
+            ]
+          }
+          EOF
+
           has_files=false
           if [ -d "./geoip" ]; then
             for filepath in ./geoip/*.txt; do
@@ -148,26 +171,55 @@ jobs:
                 sed 's/\r//g' "$filepath" | awk '
                     !/^#/ && NF {
                         gsub(/^[ \t]*-?[ \t]*/, "");
-                        sub(/^ip-cidr,/, "");
-                        sub(/^ip-cidr6,/, "");
+                        sub(/^IP-CIDR,/, "");
+                        sub(/^IP-CIDR6,/, "");
+                        # Filter ketat agar baris string judul tidak ikut lolos
                         if ($0 ~ /[0-9]/ && $0 ~ /^[0-9a-fA-F.:\/]+$/) print $0;
                     }
                 ' > "./geoip_build/data/$tagname"
             done
           fi
-          
+
           if [ "$has_files" = false ]; then
               echo "1.0.0.0/8" > ./geoip_build/data/private
           fi
 
-      - name: Build geoip.dat using v2fly/geoip source
-        run: |
-          git clone https://github.com/v2fly/geoip.git temp_geoip_source
-          cd temp_geoip_source
-          go mod tidy
-          # Menjalankan go run dengan argumen folder input text secara langsung
-          go run main.go --datapath=../geoip_build/data --output=../publish/geoip.dat
+          cd geoip_build
+          python3 -c '
+          import os, json
+          config_path = "config.json"
+          with open(config_path, "r") as f:
+              data = json.load(f)
+
+          for f_name in sorted(os.listdir("data")):
+              f_path = os.path.join("data", f_name)
+              if os.path.isfile(f_path):
+                  data["input"].append({
+                      "type": "text",
+                      "action": "add",
+                      "args": {
+                          "name": f_name,
+                          "uri": f"./data/{f_name}"
+                      }
+                  })
+
+          with open(config_path, "w") as f:
+              json.dump(data, f, indent=2)
+          '
           cd ..
+
+      - name: Build geoip.dat using v2fly/geoip
+        run: |
+          go install github.com/v2fly/geoip@latest
+          cd geoip_build
+          $(go env GOPATH)/bin/geoip -c config.json
+          cd ..
+          
+          if [ -f "./geoip_build/geoip.dat" ]; then
+              mv ./geoip_build/geoip.dat ./publish/geoip.dat
+          elif [ -f "./geoip_build/dat" ]; then
+              mv ./geoip_build/dat ./publish/geoip.dat
+          fi
 
       - name: Validate Output Files
         run: |
