@@ -1,33 +1,12 @@
-- name: Download GeoIP Lists into geoip folder
+# -------------------------------------------------------------
+      # 0. DOWNLOAD TXT DARI BRANCH TEXT LOYALSOLDIER KE FOLDER GEOIP
+      # -------------------------------------------------------------
+      - name: Download GeoIP Lists into geoip folder
         run: |
           echo "📥 Mengunduh file teks GeoIP ke folder geoip..."
           mkdir -p ./geoip
           
-          # Daftar file yang akan diunduh dari branch text Loyalsoldier
-          FILES=(
-            "id.txt"
-            "sg.txt"
-            "us.txt"
-            "my.txt"
-            "hk.txt"
-            "jp.txt"
-            "telegram.txt"
-            "google.txt"
-            "netflix.txt"
-            "tiktok.txt"
-            "meta.txt"
-            "twitter.txt"
-            "discord.txt"
-            "cloudflare.txt"
-            "cloudfront.txt"
-            "fastly.txt"
-            "amazon.txt"
-            "microsoft.txt"
-            "apple.txt"
-            "private.txt"
-          )
-          
-          for file in "${FILES[@]}"; do
+          for file in id.txt sg.txt us.txt my.txt hk.txt jp.txt telegram.txt google.txt netflix.txt tiktok.txt meta.txt twitter.txt discord.txt cloudflare.txt cloudfront.txt fastly.txt amazon.txt microsoft.txt apple.txt private.txt; do
             echo "Mengunduh $file..."
             wget -qO "./geoip/$file" "https://raw.githubusercontent.com/Loyalsoldier/geoip/text/$file" || echo "Gagal mengunduh $file"
           done
