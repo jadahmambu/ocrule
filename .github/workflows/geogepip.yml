@@ -126,11 +126,26 @@ jobs:
           mv ./dlc.dat ./publish/geosite.dat
 
       # -------------------------------------------------------------
-      # 2. BUILD GEOIP DARI FOLDER ./geoip/*.txt DENGAN CONFIG.JSON
+      # 2. BUILD GEOIP DARI FOLDER ./geoip/*.txt DENGAN FORMAT CONFIG JSON RESMI
       # -------------------------------------------------------------
       - name: Create GeoIP Config and Lists
         run: |
-          echo '{"input": [], "output": {"out": "geoip.dat", "format": "v2ray"}}' > geoip_build/config.json
+          # Struktur standar v2fly/geoip dengan input text & output v2rayGeoIPDat
+          cat << 'EOF' > geoip_build/config.json
+          {
+            "input": [],
+            "output": [
+              {
+                "type": "v2rayGeoIPDat",
+                "action": "output",
+                "args": {
+                  "outputDir": ".",
+                  "outputName": "geoip.dat"
+                }
+              }
+            ]
+          }
+          EOF
 
           has_files=false
           if [ -d "./geoip" ]; then
@@ -157,6 +172,7 @@ jobs:
               echo "1.0.0.0/8" > ./geoip_build/data/private
           fi
 
+          # Masukkan konfigurasi input text dengan argumen name, type, action, dan uri yang valid
           cd geoip_build
           python3 -c '
           import os, json
@@ -165,12 +181,15 @@ jobs:
               data = json.load(f)
           
           for f_name in sorted(os.listdir("data")):
-              if os.path.isfile(os.path.join("data", f_name)):
+              f_path = os.path.join("data", f_name)
+              if os.path.isfile(f_path):
                   data["input"].append({
-                      "name": f_name,
                       "type": "text",
-                      "path": f"data/{f_name}",
-                      "action": "add"
+                      "action": "add",
+                      "args": {
+                          "name": f_name,
+                          "uri": f"./data/{f_name}"
+                      }
                   })
           
           with open(config_path, "w") as f:
