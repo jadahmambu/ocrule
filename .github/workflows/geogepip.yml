@@ -45,8 +45,8 @@ jobs:
 
       - name: Prepare Directories
         run: |
-          rm -rf community publish
-          mkdir -p community/data publish
+          rm -rf community geoip_src publish
+          mkdir -p community/data geoip_src/data publish
 
       # -------------------------------------------------------------
       # 1. BUILD GEOSITE AUTOMATIC (Dari file .txt di root repo)
@@ -126,11 +126,52 @@ jobs:
           mv ./dlc.dat ./publish/geosite.dat
 
       # -------------------------------------------------------------
-      # 2. GET STABLE GEOIP (Stabil, ringan, & bebas error compiler)
+      # 2. BUILD GEOIP OTOMATIS (Dari folder ./geoip/*.txt milikmu)
       # -------------------------------------------------------------
-      - name: Get Lightweight geoip.dat
+      - name: Create GeoIP Lists Automatically
         run: |
-          wget -q https://github.com/MetaCubeX/meta-rules-dat/releases/download/latest/geoip.dat -O ./publish/geoip.dat
+          if [ -d "./geoip" ]; then
+            for filepath in ./geoip/*.txt; do
+                [ -e "$filepath" ] || continue
+                filename=$(basename "$filepath")
+                
+                # Nama file .txt otomatis jadi tag GeoIP (lowercase & dash)
+                tagname=$(echo "${filename%.txt}" | tr '[:upper:]' '[:lower:]' | tr '_' '-')
+                echo "⚙️ Memproses GeoIP file $filename -> Tag: $tagname"
+                
+                sed 's/\r//g' "$filepath" | awk '
+                    !/^#/ && NF {
+                        gsub(/^[ \t]*-?[ \t]*/, "");
+                        sub(/^IP-CIDR,/, "");
+                        sub(/^IP-CIDR6,/, "");
+                        print $0;
+                    }
+                ' > "./geoip_src/data/$tagname"
+            done
+          fi
+          
+          # Buat file dummy jika folder geoip kosong agar compiler tidak error
+          if [ ! "$(ls -A ./geoip_src/data)" ]; then
+              echo "1.0.0.0/8" > ./geoip_src/data/private
+          fi
+
+      - name: Build geoip.dat using v2fly/geoip
+        run: |
+          go install github.com/v2fly/geoip/v6@latest || go install github.com/v2fly/geoip@latest
+          
+          # Gunakan perintah direct datapath untuk versi compiler tertentu
+          if [ -d "./geoip_src/data" ]; then
+              $(go env GOPATH)/bin/geoip --datapath=./geoip_src/data || $(go env GOPATH)/bin/geoip -datapath=./geoip_src/data || true
+          fi
+          
+          # Cari file hasil build geoip.dat di seluruh direktori
+          find . -name "geoip.dat" -o -name "dat" | while read -r found; do
+              if [ "$found" != "./publish/geoip.dat" ]; then
+                  cp "$found" ./publish/geoip.dat
+                  echo "Ditemukan file geoip di: $found"
+                  break
+              fi
+          done
 
       - name: Validate Output Files
         run: |
