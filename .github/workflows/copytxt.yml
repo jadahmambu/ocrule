@@ -47,10 +47,9 @@ jobs:
           rm -rf community geoip geoip_build publish
           mkdir -p community/data geoip geoip_build/data publish
 
-      - name: Download GeoIP Lists (Countries & Private Only)
+      - name: Download GeoIP Lists (Stable Countries Only)
         run: |
-          echo "📥 Mengunduh GeoIP daftar negara & private..."
-          wget -qO "./geoip/cn.txt" "https://raw.githubusercontent.com/Loyalsoldier/geoip/text/cn.txt" || true
+          echo "📥 Mengunduh GeoIP daftar negara yang stabil..."
           wget -qO "./geoip/id.txt" "https://raw.githubusercontent.com/Loyalsoldier/geoip/text/id.txt" || true
           wget -qO "./geoip/sg.txt" "https://raw.githubusercontent.com/Loyalsoldier/geoip/text/sg.txt" || true
           wget -qO "./geoip/us.txt" "https://raw.githubusercontent.com/Loyalsoldier/geoip/text/us.txt" || true
@@ -173,7 +172,7 @@ jobs:
             done
           fi
           
-          if [ "$has_files" = false ]; then
+          if [ ! "$(ls -A ./geoip_build/data)" ]; then
               echo "1.0.0.0/8" > ./geoip_build/data/private
           fi
           
