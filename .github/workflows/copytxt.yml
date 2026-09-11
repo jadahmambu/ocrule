@@ -44,12 +44,13 @@ jobs:
 
       - name: Prepare Directories
         run: |
-          rm -rf community geoip geoip_src publish geoip_output
-          mkdir -p community/data geoip geoip_src/data publish geoip_output
+          rm -rf community geoip geoip_build publish
+          mkdir -p community/data geoip geoip_build/data publish
 
       - name: Download GeoIP Lists (Part 1 - Countries & Regions)
         run: |
           echo "📥 Mengunduh GeoIP bagian 1 (Negara)..."
+          wget -qO "./geoip/cn.txt" "https://raw.githubusercontent.com/Loyalsoldier/geoip/text/cn.txt" || true
           wget -qO "./geoip/id.txt" "https://raw.githubusercontent.com/Loyalsoldier/geoip/text/id.txt" || true
           wget -qO "./geoip/sg.txt" "https://raw.githubusercontent.com/Loyalsoldier/geoip/text/sg.txt" || true
           wget -qO "./geoip/us.txt" "https://raw.githubusercontent.com/Loyalsoldier/geoip/text/us.txt" || true
@@ -148,82 +149,91 @@ jobs:
           echo "full:example-direct.com" > ./community/data/cn
           echo "full:example-proxy.com" > ./community/data/geolocation-cn
 
-      - name: Build geosite.dat
+      - name: Build geosite.dat using Go Install
         run: |
           go install github.com/v2fly/domain-list-community@latest
           $(go env GOPATH)/bin/domain-list-community --datapath=./community/data
           mv ./dlc.dat ./publish/geosite.dat
 
-      - name: Create GeoIP Lists Automatically
+      - name: Create GeoIP Config and Lists
         run: |
-          if [ -d "./geoip" ]; then
-            for filepath in ./geoip/*.txt; do
-                [ -e "$filepath" ] || continue
-                filename=$(basename "$filepath")
-                tagname=$(echo "${filename%.txt}" | tr '[:upper:]' '[:lower:]' | tr '_' '-')
-                echo "⚙️ Memproses GeoIP $filename -> Tag: $tagname"
-                
-                sed 's/\r//g' "$filepath" | awk '
-                    !/^#/ && NF {
-                        gsub(/^[ \t]*-?[ \t]*/, "");
-                        print $0;
-                    }
-                ' > "./geoip_src/data/$tagname"
-            done
-          fi
-          
-          if [ ! "$(ls -A ./geoip_src/data)" ]; then
-              echo "1.0.0.0/8" > ./geoip_src/data/private
-          fi
-
-      - name: Build geoip.dat
-        run: |
-          go install github.com/v2fly/geoip@latest
-          
-          # Membuat config.json secara otomatis dengan membaca semua file .txt di folder geoip_src/data
-          cat << 'EOF' > config.json
+          cat << 'EOF' > geoip_build/config.json
           {
-            "input": [
-          EOF
-
-          FIRST=true
-          for filepath in ./geoip_src/data/*.txt; do
-            [ -e "$filepath" ] || continue
-            fname=$(basename "$filepath" .txt)
-            if [ "$FIRST" = true ]; then
-              FIRST=false
-            else
-              echo "," >> config.json
-            fi
-            cat << EOI >> config.json
-              {
-                "type": "text",
-                "action": "add",
-                "args": {
-                  "name": "$fname",
-                  "uri": "$filepath"
-                }
-              }
-EOI
-          done
-
-          cat << 'EOF' >> config.json
-            ],
+            "input": [],
             "output": [
               {
                 "type": "v2rayGeoIPDat",
                 "action": "output",
                 "args": {
-                  "outputDir": "./publish",
+                  "outputDir": ".",
                   "outputName": "geoip.dat"
                 }
               }
             ]
           }
           EOF
+          
+          has_files=false
+          if [ -d "./geoip" ]; then
+            for filepath in ./geoip/*.txt; do
+                [ -e "$filepath" ] || continue
+                has_files=true
+                filename=$(basename "$filepath")
+                
+                tagname=$(echo "${filename%.txt}" | tr '[:upper:]' '[:lower:]' | tr '_' '-')
+                echo "⚙️ Memproses GeoIP file $filename -> Tag: $tagname"
+                
+                sed 's/\r//g' "$filepath" | awk '
+                    !/^#/ && NF {
+                        gsub(/^[ \t]*-?[ \t]*/, "");
+                        sub(/^IP-CIDR,/, "");
+                        sub(/^IP-CIDR6,/, "");
+                        print $0;
+                    }
+                ' > "./geoip_build/data/$tagname"
+            done
+          fi
+          
+          if [ "$has_files" = false ]; then
+              echo "1.0.0.0/8" > ./geoip_build/data/private
+          fi
+          
+          cd geoip_build
+          python3 -c '
+          import os, json
+          config_path = "config.json"
+          with open(config_path, "r") as f:
+              data = json.load(f)
+          
+          for f_name in sorted(os.listdir("data")):
+              f_path = os.path.join("data", f_name)
+              if os.path.isfile(f_path):
+                  data["input"].append({
+                      "type": "text",
+                      "action": "add",
+                      "args": {
+                          "name": f_name,
+                          "uri": f"./data/{f_name}"
+                      }
+                  })
+          
+          with open(config_path, "w") as f:
+              json.dump(data, f, indent=2)
+          '
+          cd ..
 
-          cat config.json
+      - name: Build geoip.dat using v2fly/geoip
+        run: |
+          go install github.com/v2fly/geoip@latest
+          cd geoip_build
           $(go env GOPATH)/bin/geoip -c config.json
+          cd ..
+          
+          if [ -f "./geoip_build/geoip.dat" ]; then
+              mv ./geoip_build/geoip.dat ./publish/geoip.dat
+          elif [ -f "./geoip_build/dat" ]; then
+              mv ./geoip_build/dat ./publish/geoip.dat
+          fi
 
       - name: Validate Output Files
         run: |
