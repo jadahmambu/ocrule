@@ -1,15 +1,212 @@
-# -------------------------------------------------------------
-      # 0. DOWNLOAD TXT DARI BRANCH TEXT LOYALSOLDIER KE FOLDER GEOIP
-      # -------------------------------------------------------------
-      - name: Download GeoIP Lists into geoip folder
+name: Build V2Ray rules dat files
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - master
+      - main
+    paths-ignore:
+      - "**/README.md"
+  schedule:
+    - cron: '30 17 * * *'
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.22'
+
+      - name: Set timezone to WIB Jakarta
         run: |
-          echo "📥 Mengunduh file teks GeoIP ke folder geoip..."
+          sudo ln -sf /usr/share/zoneinfo/Asia/Jakarta /etc/localtime
+          date
+
+      - name: Set variables
+        run: |
+          echo "RELEASE_NAME=Released on $(date +'%Y-%m-%d %H:%M WIB')" >> $GITHUB_ENV
+          echo "TAG_NAME=latest" >> $GITHUB_ENV
+          
+          echo "ADGUARD_DNS=https://adguardteam.github.io/AdGuardSDNSFilter/Filters/filter.txt" >> $GITHUB_ENV
+          echo "STEVENBLACK_PORN=https://raw.githubusercontent.com/StevenBlack/hosts/master/alternates/porn-only/hosts" >> $GITHUB_ENV
+          echo "ANTISCAM_JARELL=https://raw.githubusercontent.com/jarelllama/Scam-Blocklist/main/lists/wildcard_domains/scams_light.txt" >> $GITHUB_ENV
+          echo "ANTISCAM_DISCORD=https://raw.githubusercontent.com/Discord-AntiScam/scam-links/refs/heads/main/list.txt" >> $GITHUB_ENV
+          echo "RULE_ADS_D3HOST=https://raw.githubusercontent.com/Turtlecute33/adblocktest/master/src/d3host.txt" >> $GITHUB_ENV
+
+      - name: Prepare Directories
+        run: |
+          rm -rf community geoip geoip_src publish
+          mkdir -p community/data geoip geoip_src/data publish
+
+      - name: Download GeoIP Lists (Part 1 - Countries & Regions)
+        run: |
+          echo "📥 Mengunduh GeoIP bagian 1 (Negara)..."
           mkdir -p ./geoip
-          
-          for file in id.txt sg.txt us.txt my.txt hk.txt jp.txt telegram.txt google.txt netflix.txt tiktok.txt meta.txt twitter.txt discord.txt cloudflare.txt cloudfront.txt fastly.txt amazon.txt microsoft.txt apple.txt private.txt; do
-            echo "Mengunduh $file..."
-            wget -qO "./geoip/$file" "https://raw.githubusercontent.com/Loyalsoldier/geoip/text/$file" || echo "Gagal mengunduh $file"
-          done
-          
-          echo "Daftar file di dalam folder geoip:"
+          wget -qO "./geoip/id.txt" "https://raw.githubusercontent.com/Loyalsoldier/geoip/text/id.txt" || true
+          wget -qO "./geoip/sg.txt" "https://raw.githubusercontent.com/Loyalsoldier/geoip/text/sg.txt" || true
+          wget -qO "./geoip/us.txt" "https://raw.githubusercontent.com/Loyalsoldier/geoip/text/us.txt" || true
+          wget -qO "./geoip/my.txt" "https://raw.githubusercontent.com/Loyalsoldier/geoip/text/my.txt" || true
+          wget -qO "./geoip/hk.txt" "https://raw.githubusercontent.com/Loyalsoldier/geoip/text/hk.txt" || true
+          wget -qO "./geoip/jp.txt" "https://raw.githubusercontent.com/Loyalsoldier/geoip/text/jp.txt" || true
+
+      - name: Download GeoIP Lists (Part 2 - Services & Social Media)
+        run: |
+          echo "📥 Mengunduh GeoIP bagian 2 (Layanan & Sosmed)..."
+          wget -qO "./geoip/telegram.txt" "https://raw.githubusercontent.com/Loyalsoldier/geoip/text/telegram.txt" || true
+          wget -qO "./geoip/google.txt" "https://raw.githubusercontent.com/Loyalsoldier/geoip/text/google.txt" || true
+          wget -qO "./geoip/netflix.txt" "https://raw.githubusercontent.com/Loyalsoldier/geoip/text/netflix.txt" || true
+          wget -qO "./geoip/tiktok.txt" "https://raw.githubusercontent.com/Loyalsoldier/geoip/text/tiktok.txt" || true
+          wget -qO "./geoip/meta.txt" "https://raw.githubusercontent.com/Loyalsoldier/geoip/text/meta.txt" || true
+          wget -qO "./geoip/twitter.txt" "https://raw.githubusercontent.com/Loyalsoldier/geoip/text/twitter.txt" || true
+          wget -qO "./geoip/discord.txt" "https://raw.githubusercontent.com/Loyalsoldier/geoip/text/discord.txt" || true
+
+      - name: Download GeoIP Lists (Part 3 - Infrastructure & CDN)
+        run: |
+          echo "📥 Mengunduh GeoIP bagian 3 (Infrastruktur & CDN)..."
+          wget -qO "./geoip/cloudflare.txt" "https://raw.githubusercontent.com/Loyalsoldier/geoip/text/cloudflare.txt" || true
+          wget -qO "./geoip/cloudfront.txt" "https://raw.githubusercontent.com/Loyalsoldier/geoip/text/cloudfront.txt" || true
+          wget -qO "./geoip/fastly.txt" "https://raw.githubusercontent.com/Loyalsoldier/geoip/text/fastly.txt" || true
+          wget -qO "./geoip/amazon.txt" "https://raw.githubusercontent.com/Loyalsoldier/geoip/text/amazon.txt" || true
+          wget -qO "./geoip/microsoft.txt" "https://raw.githubusercontent.com/Loyalsoldier/geoip/text/microsoft.txt" || true
+          wget -qO "./geoip/apple.txt" "https://raw.githubusercontent.com/Loyalsoldier/geoip/text/apple.txt" || true
+          wget -qO "./geoip/private.txt" "https://raw.githubusercontent.com/Loyalsoldier/geoip/text/private.txt" || true
           ls -lh ./geoip/
+
+      - name: Create Geosite Lists Automatically
+        run: |
+          > ./community/data/rule-ads
+
+          wget -qO- $ADGUARD_DNS | sed 's/\r//g' | awk '
+            !/^!/ && !/^#/ && NF {
+              gsub(/^@@\|\|/, "");
+              gsub(/^\|\|/, "");
+              gsub(/\^.*$/, "");
+              if ($0 ~ /^[a-zA-Z0-9]([a-zA-Z0-9.-]*[a-zA-Z0-9])?\.[a-zA-Z]{2,}$/ && $0 !~ /\*/ && $0 !~ /\.\./) print $0
+            }
+          ' >> ./community/data/rule-ads || true
+
+          wget -qO- $STEVENBLACK_PORN | sed 's/\r//g' | awk '
+            !/^#/ && !/^!/ && NF {
+              gsub(/^[0-9\.]+[ \t]+/, "");
+              if ($0 ~ /^[a-zA-Z0-9]([a-zA-Z0-9.-]*[a-zA-Z0-9])?\.[a-zA-Z]{2,}$/ && $0 !~ /localhost/) print $0
+            }
+          ' >> ./community/data/rule-ads || true
+
+          wget -qO- $ANTISCAM_JARELL $ANTISCAM_DISCORD | sed 's/\r//g' | awk '
+            !/^#/ && !/^!/ && NF {
+              gsub(/^[ \t]*\*\./, "");
+              gsub(/[^a-zA-Z0-9.-]/, "");
+              gsub(/\.$/, "");
+              if ($0 ~ /^[a-zA-Z0-9]([a-zA-Z0-9.-]*[a-zA-Z0-9])?\.[a-zA-Z]{2,}$/ && $0 !~ /\*/ && $0 !~ /\.\./) print $0
+            }
+          ' >> ./community/data/rule-ads || true
+
+          wget -qO- $RULE_ADS_D3HOST | sed 's/\r//g' | awk '
+            !/^#/ && !/^!/ && NF {
+              gsub(/^[0-9\.]+[ \t]+/, "");
+              gsub(/^[a-zA-Z0-9_-]+:/, "");
+              if (length($0) > 0) print $0
+            }
+          ' >> ./community/data/rule-ads || true
+
+          if [ -f "./adsblock.txt" ]; then
+              sed 's/\r//g' "./adsblock.txt" | awk '!/^#/ && NF { gsub(/^[a-zA-Z0-9_-]+:/, ""); if (length($0) > 0) print $0 }' >> ./community/data/rule-ads
+          fi
+
+          for filepath in ./*.txt; do
+              [ -e "$filepath" ] || continue
+              filename=$(basename "$filepath")
+              
+              if [[ "$filename" == "adsblock.txt" ]]; then
+                  continue
+              fi
+              
+              tagname=$(echo "${filename%.txt}" | tr '[:upper:]' '[:lower:]' | tr '_' '-')
+              echo "⚙️ Memproses Geosite $filename -> Tag: $tagname"
+              
+              sed 's/\r//g' "$filepath" | awk '
+                  !/^#/ && !/include:/ && NF {
+                      gsub(/^[ \t]*-?[ \t]*/, "");
+                      if (/^DST-PORT/ || /^IP-CIDR/) next;
+                      if (/^DOMAIN-KEYWORD,/) { print "keyword:" substr($0, 16); }
+                      else if (/^DOMAIN-SUFFIX,/) { print substr($0, 15); }
+                      else if (/^DOMAIN,/) { print "full:" substr($0, 8); }
+                      else if (/^domain:/) { print substr($0, 8); }
+                      else { print $0; }
+                  }
+              ' > "./community/data/$tagname"
+          done
+
+          echo "full:example-direct.com" > ./community/data/cn
+          echo "full:example-proxy.com" > ./community/data/geolocation-cn
+
+      - name: Build geosite.dat
+        run: |
+          go install github.com/v2fly/domain-list-community@latest
+          $(go env GOPATH)/bin/domain-list-community --datapath=./community/data
+          mv ./dlc.dat ./publish/geosite.dat
+
+      - name: Create GeoIP Lists Automatically
+        run: |
+          if [ -d "./geoip" ]; then
+            for filepath in ./geoip/*.txt; do
+                [ -e "$filepath" ] || continue
+                filename=$(basename "$filepath")
+                tagname=$(echo "${filename%.txt}" | tr '[:upper:]' '[:lower:]' | tr '_' '-')
+                echo "⚙️ Memproses GeoIP $filename -> Tag: $tagname"
+                
+                sed 's/\r//g' "$filepath" | awk '
+                    !/^#/ && NF {
+                        gsub(/^[ \t]*-?[ \t]*/, "");
+                        print $0;
+                    }
+                ' > "./geoip_src/data/$tagname"
+            done
+          fi
+          
+          if [ ! "$(ls -A ./geoip_src/data)" ]; then
+              echo "1.0.0.0/8" > ./geoip_src/data/private
+          fi
+
+      - name: Build geoip.dat
+        run: |
+          go install github.com/v2fly/geoip@latest
+          $(go env GOPATH)/bin/geoip --datapath=./geoip_src/data
+          if [ -f "./geoip.dat" ]; then
+              mv ./geoip.dat ./publish/geoip.dat
+          elif [ -f "./dat" ]; then
+              mv ./dat ./publish/geoip.dat
+          fi
+
+      - name: Validate Output Files
+        run: |
+          if [ ! -s ./publish/geosite.dat ] || [ ! -s ./publish/geoip.dat ]; then
+            echo "Error: Output dat files are empty!"
+            exit 1
+          fi
+          echo "Build validation passed. File sizes:"
+          ls -lh ./publish/
+
+      - name: Deploy to GitHub Releases
+        uses: softprops/action-gh-release@v2
+        with:
+          name: ${{ env.RELEASE_NAME }}
+          tag_name: ${{ env.TAG_NAME }}
+          draft: false
+          prerelease: false
+          files: |
+            ./publish/geoip.dat
+            ./publish/geosite.dat
+          overwrite_files: true
+          make_latest: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
