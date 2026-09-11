@@ -180,16 +180,34 @@ jobs:
         run: |
           go install github.com/v2fly/geoip@latest
           
+          # Membuat config.json secara otomatis dengan membaca semua file .txt di folder geoip_src/data
           cat << 'EOF' > config.json
           {
             "input": [
+          EOF
+
+          FIRST=true
+          for filepath in ./geoip_src/data/*.txt; do
+            [ -e "$filepath" ] || continue
+            fname=$(basename "$filepath" .txt)
+            if [ "$FIRST" = true ]; then
+              FIRST=false
+            else
+              echo "," >> config.json
+            fi
+            cat << EOI >> config.json
               {
                 "type": "text",
                 "action": "add",
                 "args": {
-                  "inputDir": "./geoip_src/data"
+                  "name": "$fname",
+                  "uri": "$filepath"
                 }
               }
+EOI
+          done
+
+          cat << 'EOF' >> config.json
             ],
             "output": [
               {
@@ -203,7 +221,8 @@ jobs:
             ]
           }
           EOF
-          
+
+          cat config.json
           $(go env GOPATH)/bin/geoip -c config.json
 
       - name: Validate Output Files
