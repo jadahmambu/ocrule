@@ -1,6 +1,6 @@
 # Custom V2Ray Rules Dat Generator
 
-Pipa otomatisasi berbasis GitHub Actions untuk membuat berkas `geosite.dat` dan `geoip.dat` yang ringan, efisien, dan dikonsolidasikan khusus untuk **OpenClash / Mihomo Core** pada perangkat dengan spesifikasi atau memori terbatas (seperti STB OpenWrt B760H).
+Pipa otomatisasi berbasis GitHub Actions untuk membuat berkas `geosite.dat` dan `geoip.dat` yang ringan, efisien, dan dikonsolidasikan khusus untuk **OpenClash / Mihomo Core** pada perangkat dengan spesifikasi atau memori terbatas (seperti STB OpenWrt B860H).
 
 ---
 
