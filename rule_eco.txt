@@ -1,120 +1,169 @@
-# ==========================================
-# 1. META ECOSYSTEM (Facebook, Instagram, WhatsApp)
-# ==========================================
-facebook.com
-fb.com
-fb.me
-m.me
-fbcdn.net
-fbsbx.com
-messenger.com
-meta.com
-meta.net
-oculus.com
-realitylabs.com
+# =====================================================
+# CUSTOM ECO & FINTECH INDONESIA RULES
+# =====================================================
 
-# Instagram
-instagram.com
-cdninstagram.com
-ig.me
+# --- INCLUDE & BUILT-IN ---
+include:bank-id
 
-# WhatsApp
-whatsapp.com
-whatsapp.net
-wa.me
+# --- GOJEK & GOTO ECOSYSTEM ---
+gojek.com
+gojek.co.id
+gotocompany.com
+gopay.com
+gopay.co.id
+gobiz.co.id
+keyword:gojek
+keyword:gopay
+keyword:goto
+keyword:gobiz
 
-# Meta Keywords
-keyword:facebook
-keyword:fbcdn
-keyword:instagram
-keyword:whatsapp
-keyword:messenger
-keyword:meta
+# --- GRAB & OVO ---
+grab.com
+grabtaxi.com
+ovo.id
+keyword:grab
+keyword:grabtaxi
+keyword:ovo
 
+# --- DANA & FINTECH / E-WALLET LAINNYA ---
+dana.id
+danaindonesia.app.link
+linkaja.id
+flip.id
+i-saku.com
+doku.com
+shopeepay.co.id
+octoclicks.co.id
+plaid.com
+cardinalcommerce.com
+checkout.com
+midtrans.com
+xendit.co
+keyword:dana
+keyword:linkaja
+keyword:flip
+keyword:octo
+keyword:octoclicks
+keyword:i-saku
+keyword:doku
+keyword:shopeepay
+keyword:gw-dana.ebuckler
+keyword:dana.threatcast
 
-# ==========================================
-# 2. E-COMMERCE INDONESIA
-# ==========================================
-shopee.co.id
-tokopedia.com
-lazada.co.id
-blibli.com
-bukalapak.com
-jd.id
-zalora.co.id
-sociolla.com
-carousell.id
-
-# E-Commerce Keywords
-keyword:shopee
-keyword:tokopedia
-keyword:lazada
-keyword:blibli
-
-
-# ==========================================
-# 3. BANK KONVENSIONAL INDONESIA
-# ==========================================
+# --- BANK NASIONAL & BANK DIGITAL INDONESIA ---
 bca.co.id
 klikbca.com
-mybca.co.id
+m2u.biz
 bankmandiri.co.id
-mandiri.co.id
-livin.id
+mandiribank.co.id
+livinbyendless.com
 bri.co.id
-bbri.co.id
 bni.co.id
-bankbsi.co.id
+bnicorporateonline.com
 cimbniaga.co.id
-permatabank.com
-danamon.co.id
-jenius.com
-btpn.com
-
-
-# ==========================================
-# 4. BANK DIGITAL & BANK BARU DI INDONESIA
-# ==========================================
+bankneocommerce.co.id
 seabank.co.id
 jago.com
-bankneocommerce.co.id
-neobank.co.id
-blubca.co.id
-bca-digital.co.id
-allobank.com
-superbank.id
-bankraya.co.id
-linebank.co.id
-krom.id
-amarbank.co.id
-tunaiku.com
-
-
-# ==========================================
-# 5. E-WALLET & FINANSIAL
-# ==========================================
-gojek.com
-gopay.co.id
-ovo.id
-dana.id
-linkaja.id
-qris.id
-
-
-# ==========================================
-# 6. KEYWORDS PERBANKAN & FINANSIAL
-# ==========================================
+blu.id
+jenius.com
+permatabank.com
+danamon.co.id
+btn.co.id
+bsinet.ai
+keyword:bank
 keyword:klikbca
-keyword:bankmandiri
-keyword:bri.co.id
-keyword:bni.co.id
+keyword:brimo
+keyword:bca
+keyword:mandiri
+keyword:bri
+keyword:bni
+keyword:cimb
+keyword:cimbniaga
+keyword:nobu
+keyword:nobubank
 keyword:seabank
-keyword:bankjago
-keyword:neobank
-keyword:blubca
-keyword:allobank
-keyword:superbank
-keyword:gopay
-keyword:ovo.id
-keyword:dana.id
-keyword:linkaja
+
+# --- SHOPEE ECOSYSTEM ---
+shopee.com
+shopee.co.id
+shopee.com.br
+shopee.com.my
+shopee.ph
+shopee.sg
+shopee.tw
+shopee.vn
+shopeemobile.com
+shopeesz.com
+susercontent.com
+shp.ee
+keyword:shopee
+keyword:api.shopee
+keyword:c-api-bit.shopeemobile
+keyword:cf.shopee
+keyword:frd.shopee
+keyword:wallet.airpay
+keyword:gw.airpay
+keyword:shopeekredit
+keyword:cdn.scredit
+keyword:sentry.paylater.scredit
+keyword:spl-h5.cmf.co.id
+keyword:mall.shopee
+keyword:foody.shopee
+keyword:games.shopee
+keyword:play.shopee
+keyword:rating.shopee
+keyword:electronicproof.ssc.shopee
+keyword:livestream.shopee
+keyword:live.shopee
+keyword:livetech.shopee
+keyword:chatroom-live.shopee
+
+# --- E-COMMERCE & MARKETPLACE LAINNYA ---
+tokopedia.com
+tokopedia.link
+tokopedia.gw-dv
+bukalapak.com
+lazada.co.id
+lzd-img
+blibli.com
+bliblitiket.com
+orami.co.id
+ralali.com
+bhinneka.com
+zalora.co.id
+sociolla.com
+matahari.com
+hijup.com
+klikindomaret.com
+alfagift.id
+keyword:tokopedia
+keyword:bukalapak
+keyword:lazada
+keyword:blibli
+keyword:bliblitiket
+keyword:orami
+keyword:ralali
+keyword:bhinneka
+keyword:zalora
+keyword:klikindomaret
+keyword:alfagift
+
+# --- PAYMENT, ANALYTICS & SDK LAINNYA ---
+aliapp.org
+domain:split.io
+domain:app.appsflyer.com
+keyword:alipay
+keyword:-ac.alipay.com
+keyword:yahoo
+keyword:olymptrade
+keyword:branch
+keyword:split
+keyword:mixpanel
+keyword:nexus-websocket-a.intercom.io
+keyword:mobile-sdk-api.intercom.io
+full:cdn.branch.io
+full:api2.branch.io
+full:events.split.io
+full:sdk.split.io
+full:auth.split.io
+full:streaming.split.io
