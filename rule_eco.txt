@@ -1,4 +1,6 @@
-# Meta Core Ecosystem
+# ==========================================
+# META ECOSYSTEM (Facebook, Instagram, WhatsApp)
+# ==========================================
 facebook.com
 fb.com
 fb.me
@@ -21,10 +23,73 @@ whatsapp.com
 whatsapp.net
 wa.me
 
-# Keywords
+# Meta Keywords
 keyword:facebook
 keyword:fbcdn
 keyword:instagram
 keyword:whatsapp
 keyword:messenger
 keyword:meta
+
+
+# ==========================================
+# E-COMMERCE INDONESIA
+# ==========================================
+shopee.co.id
+tokopedia.com
+lazada.co.id
+blibli.com
+bukalapak.com
+jd.id
+zalora.co.id
+sociolla.com
+carousell.id
+
+# E-Commerce Keywords
+keyword:shopee
+keyword:tokopedia
+keyword:lazada
+keyword:blibli
+
+
+# ==========================================
+# BANK INDONESIA (BCA, Mandiri, BRI, BNI, dll.)
+# ==========================================
+bca.co.id
+klikbca.com
+mybca.co.id
+bankmandiri.co.id
+mandiri.co.id
+livin.id
+bri.co.id
+bbri.co.id
+bni.co.id
+bankbsi.co.id
+cimbniaga.co.id
+permatabank.com
+danamon.co.id
+jenius.com
+btpn.com
+
+# Banking Keywords
+keyword:klikbca
+keyword:bankmandiri
+keyword:bri.co.id
+keyword:bni.co.id
+
+
+# ==========================================
+# E-WALLET & FINANSIAL (GoPay, OVO, DANA, dll.)
+# ==========================================
+gojek.com
+gopay.co.id
+ovo.id
+dana.id
+linkaja.id
+qris.id
+
+# E-Wallet Keywords
+keyword:gopay
+keyword:ovo.id
+keyword:dana.id
+keyword:linkaja
