@@ -1,5 +1,5 @@
 # ==========================================
-# META ECOSYSTEM (Facebook, Instagram, WhatsApp)
+# 1. META ECOSYSTEM (Facebook, Instagram, WhatsApp)
 # ==========================================
 facebook.com
 fb.com
@@ -33,7 +33,7 @@ keyword:meta
 
 
 # ==========================================
-# E-COMMERCE INDONESIA
+# 2. E-COMMERCE INDONESIA
 # ==========================================
 shopee.co.id
 tokopedia.com
@@ -53,7 +53,7 @@ keyword:blibli
 
 
 # ==========================================
-# BANK INDONESIA (BCA, Mandiri, BRI, BNI, dll.)
+# 3. BANK KONVENSIONAL INDONESIA
 # ==========================================
 bca.co.id
 klikbca.com
@@ -71,15 +71,27 @@ danamon.co.id
 jenius.com
 btpn.com
 
-# Banking Keywords
-keyword:klikbca
-keyword:bankmandiri
-keyword:bri.co.id
-keyword:bni.co.id
+
+# ==========================================
+# 4. BANK DIGITAL & BANK BARU DI INDONESIA
+# ==========================================
+seabank.co.id
+jago.com
+bankneocommerce.co.id
+neobank.co.id
+blubca.co.id
+bca-digital.co.id
+allobank.com
+superbank.id
+bankraya.co.id
+linebank.co.id
+krom.id
+amarbank.co.id
+tunaiku.com
 
 
 # ==========================================
-# E-WALLET & FINANSIAL (GoPay, OVO, DANA, dll.)
+# 5. E-WALLET & FINANSIAL
 # ==========================================
 gojek.com
 gopay.co.id
@@ -88,7 +100,20 @@ dana.id
 linkaja.id
 qris.id
 
-# E-Wallet Keywords
+
+# ==========================================
+# 6. KEYWORDS PERBANKAN & FINANSIAL
+# ==========================================
+keyword:klikbca
+keyword:bankmandiri
+keyword:bri.co.id
+keyword:bni.co.id
+keyword:seabank
+keyword:bankjago
+keyword:neobank
+keyword:blubca
+keyword:allobank
+keyword:superbank
 keyword:gopay
 keyword:ovo.id
 keyword:dana.id
