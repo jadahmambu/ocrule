@@ -1,11 +1,30 @@
-domain:whatsapp.com
-domain:whatsapp.net
-keyword:whatsapp
-domain:facebook.com
-domain:facebook.net
+# Meta Core Ecosystem
+facebook.com
+fb.com
+fb.me
+m.me
+fbcdn.net
+fbsbx.com
+messenger.com
+meta.com
+meta.net
+oculus.com
+realitylabs.com
+
+# Instagram
+instagram.com
+cdninstagram.com
+ig.me
+
+# WhatsApp
+whatsapp.com
+whatsapp.net
+wa.me
+
+# Keywords
 keyword:facebook
-domain:instagram.com
+keyword:fbcdn
 keyword:instagram
-domain:fbcdn.net
-domain:cdninstagram.com
-domain:fbsbx.com
+keyword:whatsapp
+keyword:messenger
+keyword:meta
