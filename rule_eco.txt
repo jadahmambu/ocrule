@@ -1,4 +1,31 @@
 # =====================================================
+# META ECOSYSTEM (Facebook, Instagram, WhatsApp)
+# =====================================================
+facebook.com
+fb.com
+fb.me
+m.me
+fbcdn.net
+fbsbx.com
+messenger.com
+meta.com
+meta.net
+oculus.com
+realitylabs.com
+instagram.com
+cdninstagram.com
+ig.me
+whatsapp.com
+whatsapp.net
+wa.me
+keyword:facebook
+keyword:fbcdn
+keyword:instagram
+keyword:whatsapp
+keyword:messenger
+keyword:meta
+
+# =====================================================
 # CUSTOM ECO & FINTECH INDONESIA RULES
 # =====================================================
 
