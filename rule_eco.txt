@@ -1,5 +1,5 @@
 # =====================================================
-# META ECOSYSTEM (Facebook, Instagram, WhatsApp)
+# META ECOSYSTEM
 # =====================================================
 facebook.com
 fb.com
@@ -26,33 +26,20 @@ keyword:messenger
 keyword:meta
 
 # =====================================================
-# CUSTOM ECO & FINTECH INDONESIA RULES
+# ECO, FINTECH, & E-COMMERCE INDONESIA
 # =====================================================
-
-# --- INCLUDE & BUILT-IN ---
 include:bank-id
 
-# --- GOJEK & GOTO ECOSYSTEM ---
+# --- GoTo, Grab, & E-Wallets ---
 gojek.com
 gojek.co.id
 gotocompany.com
 gopay.com
 gopay.co.id
 gobiz.co.id
-keyword:gojek
-keyword:gopay
-keyword:goto
-keyword:gobiz
-
-# --- GRAB & OVO ---
 grab.com
 grabtaxi.com
 ovo.id
-keyword:grab
-keyword:grabtaxi
-keyword:ovo
-
-# --- DANA & FINTECH / E-WALLET LAINNYA ---
 dana.id
 danaindonesia.app.link
 linkaja.id
@@ -61,23 +48,21 @@ i-saku.com
 doku.com
 shopeepay.co.id
 octoclicks.co.id
-plaid.com
-cardinalcommerce.com
-checkout.com
-midtrans.com
-xendit.co
+keyword:gojek
+keyword:gopay
+keyword:goto
+keyword:gobiz
+keyword:grab
+keyword:ovo
 keyword:dana
 keyword:linkaja
 keyword:flip
 keyword:octo
-keyword:octoclicks
 keyword:i-saku
 keyword:doku
 keyword:shopeepay
-keyword:gw-dana.ebuckler
-keyword:dana.threatcast
 
-# --- BANK NASIONAL & BANK DIGITAL INDONESIA ---
+# --- Banks & Payment Gateways ---
 bca.co.id
 klikbca.com
 m2u.biz
@@ -97,6 +82,11 @@ permatabank.com
 danamon.co.id
 btn.co.id
 bsinet.ai
+plaid.com
+cardinalcommerce.com
+checkout.com
+midtrans.com
+xendit.co
 keyword:bank
 keyword:klikbca
 keyword:brimo
@@ -105,12 +95,10 @@ keyword:mandiri
 keyword:bri
 keyword:bni
 keyword:cimb
-keyword:cimbniaga
 keyword:nobu
-keyword:nobubank
 keyword:seabank
 
-# --- SHOPEE ECOSYSTEM ---
+# --- E-Commerce & Marketplaces ---
 shopee.com
 shopee.co.id
 shopee.com.br
@@ -123,29 +111,6 @@ shopeemobile.com
 shopeesz.com
 susercontent.com
 shp.ee
-keyword:shopee
-keyword:api.shopee
-keyword:c-api-bit.shopeemobile
-keyword:cf.shopee
-keyword:frd.shopee
-keyword:wallet.airpay
-keyword:gw.airpay
-keyword:shopeekredit
-keyword:cdn.scredit
-keyword:sentry.paylater.scredit
-keyword:spl-h5.cmf.co.id
-keyword:mall.shopee
-keyword:foody.shopee
-keyword:games.shopee
-keyword:play.shopee
-keyword:rating.shopee
-keyword:electronicproof.ssc.shopee
-keyword:livestream.shopee
-keyword:live.shopee
-keyword:livetech.shopee
-keyword:chatroom-live.shopee
-
-# --- E-COMMERCE & MARKETPLACE LAINNYA ---
 tokopedia.com
 tokopedia.link
 tokopedia.gw-dv
@@ -163,34 +128,26 @@ matahari.com
 hijup.com
 klikindomaret.com
 alfagift.id
+keyword:shopee
 keyword:tokopedia
 keyword:bukalapak
 keyword:lazada
 keyword:blibli
-keyword:bliblitiket
 keyword:orami
-keyword:ralali
-keyword:bhinneka
 keyword:zalora
-keyword:klikindomaret
 keyword:alfagift
 
-# --- PAYMENT, ANALYTICS & SDK LAINNYA ---
+# --- SDK, Analytics & Utilities ---
 aliapp.org
 domain:split.io
 domain:app.appsflyer.com
+full:cdn.branch.io
+full:api2.branch.io
+full:events.split.io
+full:sdk.split.io
 keyword:alipay
-keyword:-ac.alipay.com
 keyword:yahoo
 keyword:olymptrade
 keyword:branch
 keyword:split
 keyword:mixpanel
-keyword:nexus-websocket-a.intercom.io
-keyword:mobile-sdk-api.intercom.io
-full:cdn.branch.io
-full:api2.branch.io
-full:events.split.io
-full:sdk.split.io
-full:auth.split.io
-full:streaming.split.io
